@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>楼里商业分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+/* Layout: single reading column (~760px) with wide tables/figures allowed to 1040px; sticky section index on wide screens */
+:root{
+  --bg:#F6F7F5; --paper:#FFFFFF; --ink:#16212B; --muted:#56636F; --faint:#8A96A1; --line:#E2E6E9; --soft:#EEF2F0;
+  --accent:#0A8A66; --accent-soft:#DDF2EA; --warn:#B86E00; --warn-soft:#FFF0D6; --bad:#C63F3A; --bad-soft:#FBE4E2;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --f-head:"Noto Serif SC","Songti SC","STSong",serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --f-brand:"ZCOOL QingKe HuangYou","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1317; --paper:#151B20; --ink:#E6ECF1; --muted:#9DAAB5; --faint:#6F7C87; --line:#27313A; --soft:#1B2329;
+  --accent:#2CCB98; --accent-soft:#123A2E; --warn:#F0A63A; --warn-soft:#3A2A10; --bad:#FF6B63; --bad-soft:#3D1A18;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0E1317; --paper:#151B20; --ink:#E6ECF1; --muted:#9DAAB5; --faint:#6F7C87; --line:#27313A; --soft:#1B2329;
+  --accent:#2CCB98; --accent-soft:#123A2E; --warn:#F0A63A; --warn-soft:#3A2A10; --bad:#FF6B63; --bad-soft:#3D1A18;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; color-scheme:dark;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.75}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:40px 80px}
+.col{max-width:760px}
+header.cover{padding-block:16px 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.brand{font-family:var(--f-brand);font-size:30px;color:var(--accent);letter-spacing:.04em;line-height:1}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:500}
+h1{font-family:var(--f-head);font-weight:900;font-size:clamp(30px,5vw,44px);line-height:1.2;margin:14px 0 12px;text-wrap:balance}
+h2{font-family:var(--f-head);font-weight:900;font-size:26px;line-height:1.3;margin:56px 0 10px;text-wrap:balance;scroll-margin-top:16px}
+h2 .no{font-family:var(--f-num);font-size:14px;color:var(--accent);font-weight:600;display:block;letter-spacing:.06em;margin-bottom:4px}
+h3{font-size:17px;margin:28px 0 8px}
+p{margin:0 0 12px}
+.lede{font-size:17px;color:var(--muted)}
+.meta{font-size:13px;color:var(--faint)}
+a{color:var(--accent)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:24px 0 8px}
+.vcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.vcard b{display:block;font-size:15px;margin-bottom:4px}
+.vcard p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.65}
+.vcard .k{font-family:var(--f-num);font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.06em}
+.callout{border-radius:12px;padding:14px 18px;margin:16px 0;background:var(--warn-soft);font-size:14.5px}
+.callout.ok{background:var(--accent-soft)}
+.callout b{display:block;margin-bottom:2px}
+.tbl{overflow-x:auto;margin:14px 0 18px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.6}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--muted);background:var(--soft);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.st{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:5px;white-space:nowrap}
+.st.done{background:var(--accent-soft);color:var(--accent)}
+.st.doc{background:var(--soft);color:var(--muted)}
+.st.part{background:var(--warn-soft);color:var(--warn)}
+.src{font-size:12px;color:var(--faint)}
+ul,ol{padding-left:20px;margin:0 0 12px}
+li{margin:3px 0}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:14px 0}
+.flow div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.55}
+.flow b{display:block;font-size:14px;margin-bottom:2px}
+.flow .tag{font-family:var(--f-num);font-size:11px;color:var(--accent);font-weight:600}
+figure{margin:18px 0 22px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.fig-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.fig-h b{font-size:15px}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg text{font-family:var(--f-num)}
+.model{display:grid;grid-template-columns:300px 1fr;gap:16px;margin:16px 0}
+.controls{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.seg{display:flex;background:var(--soft);border-radius:999px;padding:3px;gap:2px}
+.seg button{flex:1;border:0;background:none;padding:6px 8px;border-radius:999px;font:500 13px var(--f-body);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ctl label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);gap:8px}
+.ctl label output{font-family:var(--f-num);color:var(--ink)}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.out{min-width:0;display:flex;flex-direction:column;gap:16px}
+.out figure{margin:0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi small{display:block;font-size:12px;color:var(--muted)}
+.kpi b{font:600 22px var(--f-num)}
+.kpi b.neg{color:var(--bad)}
+.kpi b.pos{color:var(--accent)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12.5px;padding:7px 10px;border-radius:8px;line-height:1.5;z-index:10;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:8px}
+.bar i{display:block;height:8px;border-radius:4px;background:var(--accent)}
+.bar i.m{background:var(--s2)}
+.plan48{counter-reset:s;list-style:none;padding:0}
+.plan48 li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px solid var(--line)}
+.plan48 li::before{content:counter(s);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--paper);font:600 13px/28px var(--f-num);text-align:center}
+.plan48 b{display:block}
+.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;margin-top:14px}
+.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+@media (max-width:820px){.model{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:480px){.kpis{grid-template-columns:1fr}body{font-size:15px}}
+</style>
+
+<div class="wrap">
+<header class="cover col">
+  <div class="brand">楼里</div>
+  <h1>先从医院做起：楼里室内导航的需求、技术路线与商业化测算</h1>
+  <p class="lede">这份文档面向团队、学长学姐和潜在合作方，说明三件事：用户和付费方到底要什么，技术上怎样做才在所有手机上可行，三年内大概能做到多大、花多少钱。</p>
+  <p class="meta">2026 年 10 月 · 第一版 · 配套演示：楼里室内导航 Demo（网页仿真）。外部数据均附来源；标“未核实”的不应对外引用；财务部分是假设驱动的测算，不是预测承诺。</p>
+  <nav class="toc" aria-label="目录"><a href="#s1">1 结论</a><a href="#s2">2 需求分析</a><a href="#s3">3 需求到功能</a><a href="#s4">4 技术路线</a><a href="#s5">5 市场与竞品</a><a href="#s6">6 商业化因素</a><a href="#s7">7 营收与成本</a><a href="#s8">8 风险</a><a href="#s9">9 行动计划</a></nav>
+</header>
+
+<section class="col">
+<h2 id="s1"><span class="no">01</span>结论</h2>
+<div class="verdict">
+  <div class="vcard"><span class="k">场景</span><b>医院优先，商场其次</b><p>医院有明确的付费理由：卫健委智慧服务评级 4 级要求“院内定位与导航”，公开招标价在 30 万到近 200 万元。商场端高德加华为已覆盖 1 万多家，而且商场不为导航本身付费。</p></div>
+  <div class="vcard"><span class="k">技术</span><b>蓝牙信标为主，WiFi 为辅</b><p>iPhone 和 iOS 微信小程序拿不到周边 WiFi 列表，安卓也被限制为约 2 分钟 4 次扫描。能在所有手机上用的绝对定位源只有蓝牙信标，所以自研硬件是必需品，不是加分项。</p></div>
+  <div class="vcard"><span class="k">壁垒</span><b>就诊流程导航</b><p>把挂号、检查、取药串成一条路线，并结合实时排队提醒，这正是评级 5 级的要求，也是地图平台不会为单家医院定制的部分。排队取号本身不是壁垒，美团已经免费提供。</p></div>
+  <div class="vcard"><span class="k">测算</span><b>基准情景第 3 年转正</b><p>三年累计约 24 家医院、18 家商场，第三年营收约 630 万元、利润约 60 万元，前两年累计需要约 63 万元启动资金。保守情景三年都亏损。最敏感的变量是医院签约数和项目单价，详见第 7 节的可调模型。</p></div>
+</div>
+<div class="callout"><b>两天内能做到的“卖”</b>两天内签下医院采购合同不现实，招标周期通常以月计。两天内现实的目标是：拿到 1 家医院或商场的免费试点意向，约到 3 到 5 次关键人面谈，用 Demo 和这份测算换来一个真实场地做实测。</div>
+</section>
+
+<section class="col">
+<h2 id="s2"><span class="no">02</span>需求分析：谁痛，谁付钱</h2>
+<p>我们先把“用户”（找路的人）和“付费方”（医院、商场、平台）分开看。室内导航过去做不起来，多数原因不在定位精度，而在于用户很痛但不付钱，付钱的人又没被说服。</p>
+<h3>用户侧证据</h3>
+<div class="tbl"><table>
+<thead><tr><th>痛点</th><th>证据</th><th>来源</th></tr></thead>
+<tbody>
+<tr><td>医院里找不到路</td><td>1,041 人代表性调查中，47% 在医院找路有困难，老人和低学历人群更明显</td><td class="src"><a href="https://www.phil.muni.cz/en/research/publishing-and-editorial-activities-of-the-faculty/overview-of-publishing-and-scientific-activities/2557139">Suchá 等，2025</a></td></tr>
+<tr><td>只能靠问人</td><td>某三级医院 336 名首诊门诊患者中，69.6% 依靠别人指路</td><td class="src"><a href="https://www.ijcmph.com/index.php/ijcmph/article/view/15904">IJCMPH，2026（印度）</a></td></tr>
+<tr><td>医院人力被占用</td><td>一家 300 床医院员工每年约 4,500 小时用于回答问路，约合 22 万美元</td><td class="src"><a href="https://www.bdcnetwork.com/building-sector-reports/healthcare-facilities/blog/55368528/4500-hours-a-year-the-hidden-cost-of-poor-wayfinding-in-healthcare">Zimring 1990，转引</a>（数据较老）</td></tr>
+<tr><td>老年患者用不了自助设备</td><td>江西 3 家三甲医院研究：现有标识和语音提示无法有效引导老年患者</td><td class="src"><a href="https://doi.org/10.30564/jgm.v2i1.2233">Wang 等，2020</a></td></tr>
+<tr><td>停车场找不到车</td><td>2,000 名司机中 52% 每年至少找不到车一次，其中 58% 发生在购物中心</td><td class="src"><a href="https://www.autobiz.ie/all/skoda-survey-reveals-car-park-confusion">Skoda 调查，2020（爱尔兰）</a></td></tr>
+<tr><td>室内 GPS 失效</td><td>开阔地 GPS 误差约 4.9 m，室内被墙体遮挡后严重劣化；“室内误差数十米”的具体数字未核实，我们的仿真按 20–30 m 偏差建模</td><td class="src"><a href="https://archive.gps.gov/systems/gps/performance/accuracy/">gps.gov</a></td></tr>
+</tbody></table></div>
+<h3>付费方侧证据</h3>
+<div class="tbl"><table>
+<thead><tr><th>付费方</th><th>为什么会掏钱</th><th>证据</th></tr></thead>
+<tbody>
+<tr><td>三级医院</td><td>评级考核：智慧服务 4 级要求“与个人诊疗活动相关的院内定位与导航”，5 级要求按实时队列规划最佳诊疗路径</td><td class="src"><a href="https://www.karrytech.com/industry_detail/287.html">分级评估条文转载</a>；新华医院 2025 年招标直接引用该标准</td></tr>
+<tr><td>三级医院</td><td>已有采购先例，价格区间清楚</td><td class="src">新华医院奉贤院区 196.8 万元（2025，20 万㎡，<a href="https://www.xinhuamed.com.cn/files/news/2025/09/68d63565d5cd4-1758868837.docx">招标文件</a>）；青大附院 30 万元（2015，<a href="http://www.qduh.cn/ywgk/xxgonggao/273-gongshi/2088-2016-01-25-08-50-03">公示</a>）</td></tr>
+<tr><td>商场</td><td>为“引流到店”付费，不为导航付费；导航要和团购、停车、会员打包</td><td class="src">行业经验与失败案例（见第 5 节）</td></tr>
+<tr><td>地图/本地生活平台</td><td>补室内覆盖的空白，按场馆或接口授权</td><td class="src">高德开放平台商业授权 5–10 万元/年（<a href="https://lbs.amap.com/upgrade">高德</a>）说明平台本身也收费，接入需要商务谈判</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="col" style="max-width:1040px">
+<h2 id="s3" class="col"><span class="no">03</span>从需求推出功能</h2>
+<p class="col">每个功能都要能回答两个问题：它解决了上面哪条证据里的痛点，它用什么技术实现。Demo 已实现的部分可以直接现场演示。</p>
+<div class="tbl"><table>
+<thead><tr><th>用户需求</th><th>功能</th><th>技术实现</th><th>优先级</th><th>Demo</th></tr></thead>
+<tbody>
+<tr><td>知道自己在哪</td><td>蓝点定位，误差 1–3 m，带朝向和置信椭圆</td><td>蓝牙信标与 WiFi 指纹（WKNN）+ 计步与陀螺航位推算（PDR）+ EKF 融合 + 地图约束</td><td>必须</td><td><span class="st done">已实现（仿真）</span></td></tr>
+<tr><td>知道怎么走</td><td>类似高德的转弯提示，用店名和科室名做地标：“在某店处左转”</td><td>0.5 m 栅格 A*，贴墙加代价，路径拉直，按转角生成指引；偏离 6 m 自动重算</td><td>必须</td><td><span class="st done">已实现</span></td></tr>
+<tr><td>不想白排队</td><td>远程取号；按“离店步行时间 + 前面几桌/几人”提前提醒出发</td><td>队列模型 + 步行距离场（Dijkstra）；正式版对接美团排队或医院 HIS 叫号</td><td>必须</td><td><span class="st done">已实现（演示数据）</span></td></tr>
+<tr><td>一次把事办完</td><td>清单多点规划：先取号，再去别处，回来时正好叫号</td><td>全排列搜索，目标是总完成时间最短；医院按就诊阶段分段优化</td><td>重要</td><td><span class="st done">已实现</span></td></tr>
+<tr><td>挑店</td><td>附近店铺的评分、人均、团购、招牌菜、评价</td><td>点评/美团开放平台接口；Demo 为示例数据</td><td>重要</td><td><span class="st part">界面已做</span></td></tr>
+<tr><td>常去的店</td><td>收藏清单，一键规划路线</td><td>本地存储 + 规划器</td><td>重要</td><td><span class="st done">已实现</span></td></tr>
+<tr><td>医院就诊流程</td><td>挂号 → 初诊 → 检查 → 复诊 → 取药，检查顺序按排队自动优化</td><td>分阶段规划 + HIS 医嘱和排队数据</td><td>必须（医院）</td><td><span class="st done">已实现（模拟医嘱）</span></td></tr>
+<tr><td>找车</td><td>停车时自动记位置，返回时反向寻车</td><td>车库信标 + PDR 起点记忆</td><td>重要</td><td><span class="st doc">文档</span></td></tr>
+<tr><td>跨楼层</td><td>自动识别楼层，扶梯和电梯处切层</td><td>气压计高度差 + 信标楼层标签</td><td>必须（正式版）</td><td><span class="st doc">文档</span></td></tr>
+<tr><td>老人和行动不便者</td><td>语音播报、大字模式、无障碍路线（避开扶梯）</td><td>TTS；路网中为扶梯加权或禁行</td><td>重要（医院）</td><td><span class="st doc">文档</span></td></tr>
+<tr><td>商户/医院运营</td><td>客流热力图、到店转化、找路求助次数下降统计</td><td>匿名化轨迹聚合，端侧计算</td><td>付费卖点</td><td><span class="st doc">文档</span></td></tr>
+</tbody></table></div>
+</section>
+
+<section class="col">
+<h2 id="s4"><span class="no">04</span>技术路线（按调研修正后）</h2>
+<p>原路线是“模拟 WiFi 定位 + IMU 里程计 + EKF + A* 路径规划 + 地图约束”。框架不变，但调研发现定位源的主次必须调整。</p>
+<div class="callout"><b>关键修正：WiFi 不能当主定位源</b>iOS 原生 App 没有扫描周边 WiFi 的公开接口；iOS 微信小程序调用 <code>wx.getWifiList</code> 只会跳转系统设置；安卓 9 起前台应用约 2 分钟只能扫 4 次；微信 Wi-Fi 开发指南页还出现了“该系列接口已下架”的提示。反过来，<code>wx.startBeaconDiscovery</code> 在 iOS 和安卓小程序上都能拿到信标信号强度。来源：<a href="https://developers.weixin.qq.com/miniprogram/dev/api/device/wifi/wx.getWifiList.html">微信文档</a>、<a href="https://developer.android.com/develop/connectivity/wifi/wifi-scan">Android 文档</a>、<a href="https://developers.weixin.qq.com/miniprogram/dev/api/device/ibeacon/wx.startBeaconDiscovery.html">Beacon 接口</a>。</div>
+<div class="flow">
+  <div><span class="tag">绝对定位</span><b>楼里信标</b>吸顶 BLE 5.0，兼容 iBeacon，只布在路口、电梯口、科室门口</div>
+  <div><span class="tag">辅助</span><b>场馆 WiFi</b>安卓端低频校正；或与 AP 厂商合作做网络侧定位</div>
+  <div><span class="tag">相对定位</span><b>PDR</b>小程序约 50 Hz 读加速度计和陀螺仪，计步、估步长、测转向</div>
+  <div><span class="tag">融合</span><b>EKF</b>状态为位置和航向；马氏距离门限剔除离群值；观测噪声按指纹置信度调整</div>
+  <div><span class="tag">约束</span><b>地图约束</b>不许穿墙，撞墙时沿墙滑动并修正航向；导航时吸附到路线</div>
+  <div><span class="tag">规划</span><b>A* 与多点规划</b>地标式指引；排队感知的多店/多科室顺序优化</div>
+</div>
+<h3>仿真结果</h3>
+<p>Demo 内置了一个 140 m × 84 m 的单层场馆：26 个现有 WiFi 热点、43 个楼里信标、带噪声的信号传播模型（对数距离路径损耗、穿墙衰减、4.5 dB 随机波动）和带陀螺零偏的步行模型。下面是连续漫游 3 × 600 秒的统计结果。</p>
+<figure>
+  <div class="fig-h"><b>定位误差（米，越低越好）</b><div class="legend"><span><i style="background:var(--s1)"></i>仅商场 WiFi</span><span><i style="background:var(--s2)"></i>WiFi + 楼里信标</span></div></div>
+  <svg id="errChart" viewBox="0 0 700 250" width="100%" role="img" aria-label="各定位方法误差对比柱状图"></svg>
+  <figcaption>均值与 P90（90% 的时间误差低于该值）。手机 GPS 和纯惯导误差过大，在图外以数字标出。这是仿真结果，真机实测通常更差，需要在试点场馆复核。</figcaption>
+</figure>
+<div class="tbl"><table>
+<thead><tr><th>方法</th><th class="n">仅 WiFi 均值</th><th class="n">仅 WiFi P90</th><th class="n">+信标 均值</th><th class="n">+信标 P90</th></tr></thead>
+<tbody>
+<tr><td>手机 GPS（室内）</td><td class="n">27.9</td><td class="n">38.2</td><td class="n">23.0</td><td class="n">33.0</td></tr>
+<tr><td>纯惯导 PDR（漂移累积）</td><td class="n">50.1</td><td class="n">86.1</td><td class="n">36.0</td><td class="n">64.1</td></tr>
+<tr><td>指纹定位原始值（WKNN）</td><td class="n">3.98</td><td class="n">7.69</td><td class="n">2.68</td><td class="n">4.84</td></tr>
+<tr><td><b>EKF 融合 + 地图约束</b></td><td class="n"><b>2.14</b></td><td class="n"><b>4.10</b></td><td class="n"><b>1.53</b></td><td class="n"><b>2.85</b></td></tr>
+</tbody></table></div>
+<p class="src">GPS 与纯惯导两行的“仅 WiFi”和“+信标”差别来自不同的随机轨迹，和信号源无关。</p>
+<p>开发中有一个值得写进答辩的发现：最初把“穿墙”直接截停，估计位置会被困在店铺里，P90 反而恶化到 15 m；改成沿墙滑动并据此修正航向后，P90 降到 4.1 m。地图约束本身也是一种校正陀螺漂移的观测。</p>
+<h3>各终端的取舍</h3>
+<div class="tbl"><table>
+<thead><tr><th>载体</th><th>能拿到的数据</th><th>定位</th></tr></thead>
+<tbody>
+<tr><td>微信小程序（主载体）</td><td>iOS/安卓都有信标 + IMU；安卓另有 WiFi（低频，可用性待实测）</td><td>可用，主方案</td></tr>
+<tr><td>原生 SDK（嵌入点评/高德/医院 App）</td><td>同上，安卓可加 WiFi RTT</td><td>最好，靠合作</td></tr>
+<tr><td>网页 H5（当前 Demo）</td><td>只有 IMU，iOS 需 HTTPS 和点击授权；没有信标和 WiFi</td><td>只做展示</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="col">
+<h2 id="s5"><span class="no">05</span>市场与竞品</h2>
+<h3>市场规模：大数字要谨慎用</h3>
+<div class="tbl"><table>
+<thead><tr><th>口径</th><th>数值</th><th>来源</th></tr></thead>
+<tbody>
+<tr><td>全球室内定位（MarketsandMarkets）</td><td>2025 年 150.2 亿美元 → 2031 年 501.0 亿美元，年复合 22.3%</td><td class="src"><a href="https://www.marketsandmarkets.com/Market-Reports/indoor-positioning-navigation-market-989.html">链接</a></td></tr>
+<tr><td>全球室内 LBS（Grand View）</td><td>2022 年 155 亿美元 → 2030 年 452 亿美元，亚太增速最快（18.9%）</td><td class="src"><a href="https://www.grandviewresearch.com/industry-analysis/indoor-lbs-market">链接</a></td></tr>
+<tr><td>中国室内定位产业（智研咨询）</td><td>2022 年 64.6 亿元，+12.8%；约 60% 用于安防</td><td class="src"><a href="https://www.chyxx.com/industry/1150560.html">链接</a></td></tr>
+</tbody></table></div>
+<p>这些数字主要是工业、安防和资产追踪，面向消费者的商场和医院导航只占一小块，<b>不能当作我们的可触达市场</b>。我们用场馆数自下而上估算：</p>
+<div class="tbl"><table>
+<thead><tr><th>层级</th><th>算法</th><th class="n">规模</th></tr></thead>
+<tbody>
+<tr><td>医院 TAM</td><td>三级医院 4,111 家 × 一次性部署 30 万元</td><td class="n">12.3 亿元</td></tr>
+<tr><td>医院 TAM（年费）</td><td>4,111 家 × 8 万元/年</td><td class="n">3.3 亿元/年</td></tr>
+<tr><td>商场 TAM（年费）</td><td>5,685 家（≥3 万㎡）× 4 万元/年</td><td class="n">2.3 亿元/年</td></tr>
+<tr><td>近期可服务市场</td><td>浙江省内三级医院和新建院区 + 杭州头部商场，先做 20–50 家</td><td class="n">约 0.1–0.2 亿元</td></tr>
+</tbody></table></div>
+<p class="src">场馆数：<a href="https://www.nhc.gov.cn/guihuaxxs/c100133/202512/f1c3a3c617484a27a1a26a468afbaeee/files/2024年我国卫生健康事业发展统计公报-20251201161542231.pdf">卫健委 2024 统计公报</a>（三级医院 4,111 家，三甲 1,876 家，三级医院年诊疗 28.7 亿人次）；<a href="https://m.winshang.com/news716925.html">赢商网</a>（2022 年末购物中心 5,685 家）。单价为我们的定价假设。</p>
+<h3>竞品</h3>
+<div class="tbl"><table>
+<thead><tr><th>竞品</th><th>做法</th><th>对我们的含义</th></tr></thead>
+<tbody>
+<tr><td>高德室内 / AR 导航</td><td>视觉定位 + AR；2021 年首批只有北京 5 个商场，2026 年“实景漫游”也只覆盖北京几家</td><td>商场头部玩家，但医院流程不做；适合做合作方而不是对手</td></tr>
+<tr><td>华为 Petal 地图 + 高德</td><td>多源融合，宣称 1 万+ 商场、店铺级；仅限华为机型</td><td>商场场景基本被覆盖，避开正面竞争</td></tr>
+<tr><td>蜂鸟视图 Fengmap 等</td><td>室内地图引擎 + 蓝牙定位，项目制；报道称平台服务费 10–50 万元/幢</td><td>医院项目的直接对手，我们的差异是流程导航和更低部署成本</td></tr>
+<tr><td>美团排队 / 点评取号</td><td>商户端基础功能免费</td><td>取号不做壁垒，直接对接</td></tr>
+<tr><td>Apple Indoor Maps</td><td>用场馆现有 WiFi 做指纹，和我们原始思路相同；要求年客流 100 万以上并有官方 App</td><td>验证了技术路线，但在国内基本没落地</td></tr>
+<tr><td>IndoorAtlas / Situm / Pointr</td><td>海外 SaaS；IndoorAtlas Pro 349 欧元/场馆/月</td><td>可作为年费定价的参照</td></tr>
+</tbody></table></div>
+<h3>前人为什么没做大</h3>
+<ul>
+<li>用户低频、一次性使用，单独做 App 获客成本太高。所以我们走小程序，并争取嵌入点评、高德或医院 App。</li>
+<li>地图维护被低估，商户一换铺位地图就过期。Palmap 最后只能把数据卖给平台。</li>
+<li>信标掉电、被拆，运维成本吃掉利润。我们只在关键节点布信标，靠惯导和地图约束补齐中间段。</li>
+<li>商场不为导航付费。Inpixon 2024 年改名 XTI Aerospace 并剥离定位业务。</li>
+</ul>
+</section>
+
+<section class="col">
+<h2 id="s6"><span class="no">06</span>影响商业化的因素：打分模型</h2>
+<p>公开数据只有几十个样本点，不够训练任何统计模型，强行做回归只会得到看起来精确的错误结论。我们改用透明的因素打分：从白皮书和调研中提炼出 9 个因素，按证据给权重，再分别给医院和商场两个场景打 1–5 分（5 分最有利）。权重和分数都是团队判断，表里写明了依据，欢迎挑战。</p>
+<div class="tbl"><table id="factorTbl">
+<thead><tr><th>因素</th><th class="n">权重</th><th class="n">医院</th><th class="n">商场</th><th>依据</th></tr></thead>
+<tbody></tbody>
+</table></div>
+<figure>
+  <div class="fig-h"><b>加权得分（满分 5）</b><div class="legend"><span><i style="background:var(--s1)"></i>医院</span><span><i style="background:var(--s2)"></i>商场</span></div></div>
+  <div id="factorBars"></div>
+  <figcaption>医院在付费意愿、政策和数据壁垒上明显占优，唯一的短板是销售周期长。这一短板可以用浙大附属医院体系的资源来缩短。</figcaption>
+</figure>
+<p>白皮书中反复出现的共性因素（<a href="https://cloud.tencent.com/developer/news/715499">《5G室内融合定位白皮书》</a>、<a href="https://www.chyxx.com/industry/1150560.html">智研咨询 2023</a>）：部署和运维成本、多方物业协调、缺少统一标准、室内地图数据不足、商业模式不成熟、隐私顾虑。另外，《个人信息保护法》第 28、29 条把行踪轨迹列为敏感个人信息，必须单独同意，所以产品里要做单独授权弹窗，并尽量在手机端完成计算。</p>
+</section>
+
+<section style="max-width:1040px">
+<div class="col">
+<h2 id="s7"><span class="no">07</span>三年营收与成本测算</h2>
+<p>收入分三块：医院一次性部署费、医院和商场年服务费、商场导流分成（按日客流 × 使用率 × 单次收益估算，金额很小，只是为了说明商场导流靠不住）。成本分四块：每个场馆的交付成本（信标、采集、地图、HIS 对接）、团队人力、销售费用、云和杂费。可以切换情景，也可以拖动滑块改假设。</p>
+</div>
+<div class="model">
+  <div class="controls" id="controls">
+    <div class="seg" id="scen"><button data-s="low">保守</button><button data-s="base" aria-pressed="true">基准</button><button data-s="high">乐观</button></div>
+  </div>
+  <div class="out">
+    <div class="kpis">
+      <div class="kpi"><small>第 3 年营收</small><b id="k1">–</b></div>
+      <div class="kpi"><small>第 3 年利润</small><b id="k2">–</b></div>
+      <div class="kpi"><small>三年累计现金需求</small><b id="k3">–</b></div>
+    </div>
+    <figure>
+      <div class="fig-h"><b>营收与成本（万元）</b><div class="legend"><span><i style="background:var(--s1)"></i>营收</span><span><i style="background:var(--s2)"></i>成本</span></div></div>
+      <svg id="revChart" viewBox="0 0 640 260" width="100%" role="img" aria-label="三年营收与成本柱状图"></svg>
+    </figure>
+    <figure>
+      <div class="fig-h"><b>第 3 年利润对各假设的敏感度</b><div class="legend"><span><i style="background:var(--s1)"></i>利润增加</span><span><i style="background:var(--s2)"></i>利润减少</span></div></div>
+      <svg id="tornado" viewBox="0 0 640 260" width="100%" role="img" aria-label="敏感性分析龙卷风图"></svg>
+      <figcaption>每个假设单独上调或下调 30%，其余不变。条越长，说明这个假设越值得优先验证。</figcaption>
+    </figure>
+  </div>
+</div>
+<div class="tbl" id="pnl"></div>
+<div class="col">
+<p class="src">单价依据：医院部署费 30 万元，低于新华医院 196.8 万元的 AR 方案，高于 2015 年青大附院的 30 万元 WiFi 方案（考虑通胀和 HIS 对接）；年费参照 IndoorAtlas Pro 约 2.9 万元/场馆/年和国内项目运维惯例；单院交付成本按约 300 个信标 × 50 元、两人一周采集建图、HIS 对接 5 万元估算。信标单价参照 <a href="https://www.beaconzone.co.uk/blog/how-much-is-ibeacon/">BeaconZone</a> 每个约 10 美元。</p>
+</div>
+</section>
+
+<section class="col">
+<h2 id="s8"><span class="no">08</span>主要风险与应对</h2>
+<div class="tbl"><table>
+<thead><tr><th>风险</th><th>影响</th><th>应对</th></tr></thead>
+<tbody>
+<tr><td>真机精度不如仿真</td><td>高</td><td>尽快在一个真实楼层实测：iOS 微信信标刷新率和 RSSI 噪声、手持与口袋两种状态的 PDR 误差</td></tr>
+<tr><td>微信 WiFi 接口下架</td><td>中</td><td>主方案已改为信标，WiFi 只做安卓加分项</td></tr>
+<tr><td>医院招标周期长</td><td>高</td><td>先做免费试点换案例；通过信息科和智慧医院评级负责人切入；与已中标的集成商合作当分包</td></tr>
+<tr><td>大平台下场</td><td>中</td><td>定位为医院流程和 HIS 对接专家，给平台供数据和接口，而不是做独立 App</td></tr>
+<tr><td>信标运维</td><td>中</td><td>只布关键节点；记录电量，按批次巡检；年费里包含运维</td></tr>
+<tr><td>隐私合规</td><td>中</td><td>端侧计算、轨迹匿名化、单独同意弹窗、在隐私指引中声明传感器用途</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="col">
+<h2 id="s9"><span class="no">09</span>接下来 48 小时和 3 个月</h2>
+<h3>48 小时</h3>
+<ol class="plan48">
+<li><b>今晚：统一说法</b>对外统一叫“楼里”，主打“医院就诊导航”。Demo 现场先演示医院场景的就诊路线，再切到商场。</li>
+<li><b>明天上午：列 10 个关键人</b>浙大各附属医院（含余杭、之江等新院区）信息科和门诊办，以及在医疗信息化、商业地产、地图公司工作的学长学姐。每人发一段 3 句话的介绍加 Demo 链接。</li>
+<li><b>明天下午：约 3–5 次面谈</b>不要求对方采购，只要求一件事：给一层楼做两周免费实测，或者一封试点意向书。</li>
+<li><b>同步：做真机最小验证</b>买 20 个现成 iBeacon（每个几十元），在教学楼一层布设，用小程序跑通信标扫描和计步。这一步决定后面所有数字是否站得住。</li>
+<li><b>收尾：更新这份文档</b>把面谈得到的真实报价、采购流程和顾虑填进第 7 节的假设。</li>
+</ol>
+<h3>3 个月</h3>
+<ul>
+<li>完成 1 家医院一层楼的试点，产出实测误差和“问路次数下降”的数据，这是第一份可以拿去卖的证据。</li>
+<li>参加“互联网+”、挑战杯等创业竞赛，借评审和导师背书，同时争取学校创业孵化资源。</li>
+<li>与 1 家集成商或地图厂商谈合作：我们出流程导航和信标方案，对方出渠道和资质。</li>
+<li>商场线只做一件事：反向寻车。它在医院和商场的地下车库都适用，用户感知最强。</li>
+</ul>
+</section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.hidden=false;const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px';}
+function hideTip(){tip.hidden=true;}
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const n=document.createElementNS(NS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);if(parent)parent.appendChild(n);return n;}
+function txt(parent,x,y,s,attrs={}){const t=el('text',{x,y,fill:css('--muted'),'font-size':11,...attrs},parent);t.textContent=s;return t;}
+function barPath(x,y,w,h){const r=Math.min(4,w/2,Math.abs(h));if(h<=0)return '';return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;}
+
+/* ---------- positioning error chart ---------- */
+const ERR=[['指纹原始 均值',3.98,2.68],['指纹原始 P90',7.69,4.84],['EKF 融合 均值',2.14,1.53],['EKF 融合 P90',4.10,2.85]];
+function drawErr(){const s=$('#errChart');s.innerHTML='';const L=44,R=690,T=14,B=210,ymax=8;const Y=v=>B-(v/ymax)*(B-T);
+  for(const v of [0,2,4,6,8]){el('line',{x1:L,x2:R,y1:Y(v),y2:Y(v),stroke:css('--line')},s);txt(s,L-8,Y(v)+4,v,{'text-anchor':'end'});}
+  const gw=(R-L)/ERR.length,bw=Math.min(46,gw*.3);
+  ERR.forEach(([lab,a,b],i)=>{const cx=L+gw*i+gw/2;
+    [[a,'--s1','仅商场 WiFi'],[b,'--s2','WiFi + 楼里信标']].forEach(([v,c,n],j)=>{const x=cx-bw-1+j*(bw+2);const p=el('path',{d:barPath(x,Y(v),bw,B-Y(v)),fill:css(c)},s);
+      txt(s,x+bw/2,Y(v)-6,v.toFixed(2),{'text-anchor':'middle',fill:css('--ink')});
+      const hit=el('rect',{x:x-2,y:T,width:bw+4,height:B-T,fill:'transparent'},s);hit.addEventListener('mousemove',e=>showTip(e,`${lab}<br>${n}：${v.toFixed(2)} m`));hit.addEventListener('mouseleave',hideTip);});
+    txt(s,cx,B+20,lab,{'text-anchor':'middle',fill:css('--ink'),'font-family':'var(--f-body)','font-size':12});});
+  txt(s,L,B+38,'图外：手机 GPS 均值 23–28 m；纯惯导均值 36–50 m',{'font-family':'var(--f-body)'});}
+
+/* ---------- factor scoring ---------- */
+const FACT=[
+ ['付费方与预算',0.18,4,2,'医院有评级考核和 30–197 万元采购先例；商场不为导航付费'],
+ ['用户需求强度',0.14,4,2,'47% 找路困难、69.6% 靠问路；商场导航被质疑是伪需求'],
+ ['政策驱动',0.12,5,2,'智慧服务 4 级要求院内定位与导航；智慧商圈只有鼓励'],
+ ['竞争空白（越空越高）',0.12,3,1,'医院厂商分散、项目制；商场已被高德加华为覆盖 1 万+ 家'],
+ ['数据打通壁垒',0.10,4,2,'HIS 排队与医嘱对接难复制；商场排队已被美团免费化'],
+ ['部署与运维成本',0.10,3,3,'两者都要信标和地图；医院面积大但布局稳定'],
+ ['终端可达性',0.10,3,3,'都走小程序加信标；医院可嵌入医院公众号'],
+ ['销售周期（越短越高）',0.08,2,3,'医院招标以月计；商场决策链短但意愿低'],
+ ['隐私合规难度（越易越高）',0.06,3,3,'轨迹是敏感个人信息；医院还涉及就诊信息']];
+function drawFactors(){$('#factorTbl tbody').innerHTML=FACT.map(([n,w,h,m,why])=>`<tr><td>${n}</td><td class="n">${w.toFixed(2)}</td><td class="n">${h}</td><td class="n">${m}</td><td class="src" style="font-size:12.5px">${why}</td></tr>`).join('');
+  const sh=FACT.reduce((s,f)=>s+f[1]*f[2],0),sm=FACT.reduce((s,f)=>s+f[1]*f[3],0);
+  $('#factorBars').innerHTML=[['医院',sh,''],['商场',sm,'m']].map(([n,v,c])=>`<div class="bar" style="margin:8px 0"><span style="width:44px;font-size:13px">${n}</span><i class="${c}" style="width:${v/5*70}%"></i><span class="num" style="font-size:13px">${v.toFixed(2)}</span></div>`).join('');}
+
+/* ---------- financial model (万元) ---------- */
+const SCEN={
+ low:{h1:1,h2:4,h3:8,m1:0,m2:2,m3:5,proj:25,saas:6,mall:3,staff1:4,staff2:7,staff3:12},
+ base:{h1:2,h2:7,h3:15,m1:1,m2:5,m3:12,proj:30,saas:8,mall:4,staff1:5,staff2:9,staff3:16},
+ high:{h1:3,h2:12,h3:28,m1:3,m2:10,m3:25,proj:35,saas:10,mall:5,staff1:6,staff2:12,staff3:22}};
+const FIX={cDeploy:10,cMall:3,cOps:1,salary:15,salesPct:.12,other:[10,15,25],traffic:1.72*365*0.005*0.3/10};
+const CTL=[['h1','第 1 年新签医院',0,10,1,'家'],['h2','第 2 年新签医院',0,30,1,'家'],['h3','第 3 年新签医院',0,60,1,'家'],
+ ['m1','第 1 年新签商场',0,10,1,'家'],['m2','第 2 年新签商场',0,30,1,'家'],['m3','第 3 年新签商场',0,60,1,'家'],
+ ['proj','医院部署费',10,80,1,'万元'],['saas','医院年费',2,20,1,'万元/年'],['mall','商场年费',1,15,1,'万元/年'],
+ ['cDeploy','单院交付成本',3,30,1,'万元'],['salary','人均人力成本',6,30,1,'万元/年'],
+ ['staff1','第 1 年团队',2,15,1,'人'],['staff2','第 2 年团队',2,30,1,'人'],['staff3','第 3 年团队',2,50,1,'人']];
+let A={...SCEN.base,...FIX};
+function model(a){const H=[a.h1,a.h2,a.h3],M=[a.m1,a.m2,a.m3],S=[a.staff1,a.staff2,a.staff3];let hc=0,mc=0;const rows=[];
+  for(let i=0;i<3;i++){const hs=(hc+H[i]*.5),ms=(mc+M[i]*.5);
+    const rProj=H[i]*a.proj,rSaas=hs*a.saas,rMall=ms*a.mall,rTraffic=ms*a.traffic,rev=rProj+rSaas+rMall+rTraffic;
+    const cDel=H[i]*a.cDeploy+M[i]*a.cMall,cOps=(hc+mc+H[i]+M[i])*a.cOps,cTeam=S[i]*a.salary,cSales=rev*a.salesPct,cOther=a.other[i];
+    const cost=cDel+cOps+cTeam+cSales+cOther;rows.push({rProj,rSaas,rMall,rTraffic,rev,cDel,cOps,cTeam,cSales,cOther,cost,profit:rev-cost});hc+=H[i];mc+=M[i];}
+  return rows;}
+const f0=v=>Math.round(v).toLocaleString('zh-CN');
+function cashNeed(rows){let c=0,min=0;for(const r of rows){c+=r.profit;min=Math.min(min,c);}return -min;}
+function render(){const rows=model(A);const y3=rows[2];
+  $('#k1').textContent=f0(y3.rev)+' 万';const k2=$('#k2');k2.textContent=(y3.profit>=0?'+':'')+f0(y3.profit)+' 万';k2.className=y3.profit>=0?'pos':'neg';$('#k3').textContent=f0(cashNeed(rows))+' 万';
+  // revenue vs cost
+  const s=$('#revChart');s.innerHTML='';const L=48,R=630,T=16,B=226;const mx=Math.max(...rows.map(r=>Math.max(r.rev,r.cost)))*1.15||1;
+  const step=mx>800?200:mx>400?100:mx>160?50:20;const ymax=Math.ceil(mx/step)*step;const Y=v=>B-(v/ymax)*(B-T);
+  for(let v=0;v<=ymax;v+=step){el('line',{x1:L,x2:R,y1:Y(v),y2:Y(v),stroke:css('--line')},s);txt(s,L-8,Y(v)+4,v,{'text-anchor':'end'});}
+  const gw=(R-L)/3,bw=Math.min(54,gw*.28);
+  rows.forEach((r,i)=>{const cx=L+gw*i+gw/2;
+    [[r.rev,'--s1','营收',`部署 ${f0(r.rProj)} · 医院年费 ${f0(r.rSaas)}<br>商场年费 ${f0(r.rMall)} · 导流 ${f0(r.rTraffic)}`],[r.cost,'--s2','成本',`交付 ${f0(r.cDel)} · 运维 ${f0(r.cOps)} · 人力 ${f0(r.cTeam)}<br>销售 ${f0(r.cSales)} · 其他 ${f0(r.cOther)}`]].forEach(([v,c,n,detail],j)=>{
+      const x=cx-bw-1+j*(bw+2);el('path',{d:barPath(x,Y(v),bw,B-Y(v)),fill:css(c)},s);txt(s,x+bw/2,Y(v)-6,f0(v),{'text-anchor':'middle',fill:css('--ink')});
+      const hit=el('rect',{x:x-2,y:T,width:bw+4,height:B-T,fill:'transparent'},s);hit.addEventListener('mousemove',e=>showTip(e,`第 ${i+1} 年${n}：${f0(v)} 万元<br>${detail}`));hit.addEventListener('mouseleave',hideTip);});
+    txt(s,cx,B+18,`第 ${i+1} 年`,{'text-anchor':'middle',fill:css('--ink'),'font-family':'var(--f-body)','font-size':12});
+    txt(s,cx,B+33,`利润 ${r.profit>=0?'+':''}${f0(r.profit)}`,{'text-anchor':'middle','font-family':'var(--f-body)',fill:r.profit>=0?css('--accent'):css('--bad')});});
+  // tornado
+  const keys=[['h3','第 3 年新签医院数'],['proj','医院部署费'],['saas','医院年费'],['cDeploy','单院交付成本'],['salary','人均人力成本'],['staff3','第 3 年团队规模'],['m3','第 3 年新签商场数'],['mall','商场年费']];
+  const baseP=y3.profit;const items=keys.map(([k,n])=>{const lo=model({...A,[k]:A[k]*.7})[2].profit-baseP,hi=model({...A,[k]:A[k]*1.3})[2].profit-baseP;return {n,lo,hi,span:Math.abs(hi-lo)};}).sort((a,b)=>b.span-a.span);
+  const t=$('#tornado');t.innerHTML='';const cx=400,W2=220,rowH=28,top=12;const m2=Math.max(...items.map(i=>Math.max(Math.abs(i.lo),Math.abs(i.hi))))||1;const X=v=>cx+v/m2*W2;
+  el('line',{x1:cx,x2:cx,y1:top-4,y2:top+items.length*rowH,stroke:css('--faint')},t);
+  items.forEach((it,i)=>{const y=top+i*rowH;txt(t,cx-W2-12,y+rowH/2+4,it.n,{'text-anchor':'end',fill:css('--ink'),'font-family':'var(--f-body)','font-size':12.5});
+    [[it.lo,'−30%'],[it.hi,'+30%']].forEach(([v,lab])=>{const x0=Math.min(X(0),X(v)),w=Math.abs(X(v)-X(0));if(w<.5)return;
+      el('rect',{x:x0,y:y+6,width:w,height:rowH-12,rx:3,fill:v>=0?css('--s1'):css('--s2')},t);
+      const hit=el('rect',{x:x0-2,y:y+2,width:w+4,height:rowH-4,fill:'transparent'},t);hit.addEventListener('mousemove',e=>showTip(e,`${it.n} ${lab}<br>第 3 年利润 ${v>=0?'+':''}${f0(v)} 万元`));hit.addEventListener('mouseleave',hideTip);});});
+  txt(t,cx,top+items.length*rowH+18,'0',{'text-anchor':'middle'});txt(t,X(m2),top+items.length*rowH+18,'+'+f0(m2),{'text-anchor':'end'});txt(t,X(-m2),top+items.length*rowH+18,'−'+f0(m2),{'text-anchor':'start'});
+  // P&L table
+  const line=(lab,k,b)=>`<tr><td>${b?'<b>'+lab+'</b>':lab}</td>${rows.map(r=>`<td class="n">${b?'<b>':''}${f0(r[k])}${b?'</b>':''}</td>`).join('')}</tr>`;
+  $('#pnl').innerHTML=`<table><thead><tr><th>万元</th><th class="n">第 1 年</th><th class="n">第 2 年</th><th class="n">第 3 年</th></tr></thead><tbody>
+  ${line('医院部署费','rProj')}${line('医院年费','rSaas')}${line('商场年费','rMall')}${line('商场导流分成','rTraffic')}${line('营收合计','rev',1)}
+  ${line('交付成本','cDel')}${line('运维','cOps')}${line('团队人力','cTeam')}${line('销售费用（12%）','cSales')}${line('云与其他','cOther')}${line('成本合计','cost',1)}${line('利润','profit',1)}</tbody></table>`;}
+function buildControls(){const c=$('#controls');c.insertAdjacentHTML('beforeend',CTL.map(([k,l,mn,mx,st,u])=>`<div class="ctl"><label for="c-${k}">${l}<output id="o-${k}"></output></label><input type="range" id="c-${k}" min="${mn}" max="${mx}" step="${st}"></div>`).join(''));
+  CTL.forEach(([k,,,,,u])=>{const i=$('#c-'+k);i.addEventListener('input',()=>{A[k]=+i.value;$('#o-'+k).textContent=i.value+' '+u;document.querySelectorAll('#scen button').forEach(b=>b.setAttribute('aria-pressed','false'));render();});});
+  syncControls();}
+function syncControls(){CTL.forEach(([k,,,,,u])=>{$('#c-'+k).value=A[k];$('#o-'+k).textContent=A[k]+' '+u;});}
+$('#scen').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;A={...A,...SCEN[b.dataset.s]};document.querySelectorAll('#scen button').forEach(x=>x.setAttribute('aria-pressed',x===b));syncControls();render();});
+function all(){drawErr();drawFactors();render();}
+buildControls();all();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
+
+</html>

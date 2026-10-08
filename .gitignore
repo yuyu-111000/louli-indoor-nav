@@ -1,0 +1,7 @@
+.claude/
+__pycache__/
+*.py[cod]
+backend/runtime/
+.DS_Store
+.env
+.env.*

@@ -1,0 +1,139 @@
+\documentclass[UTF8,11pt,fontset=fandol]{ctexart}
+\usepackage[a4paper,margin=20mm,top=21mm,bottom=20mm]{geometry}
+\usepackage{xcolor,tabularx,array,enumitem,fancyhdr,hyperref}
+\definecolor{brand}{HTML}{087B62}\definecolor{ink}{HTML}{182C37}\definecolor{muted}{HTML}{60727A}\definecolor{pale}{HTML}{EDF5F2}
+\hypersetup{colorlinks=true,urlcolor=brand,linkcolor=brand,pdftitle={楼里商业计划与试点合作讨论稿},pdfauthor={楼里项目}}
+\setlength{\parindent}{0pt}\setlength{\parskip}{6pt}\linespread{1.16}
+\setlist[itemize]{leftmargin=1.5em,itemsep=3pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.6em,itemsep=3pt,topsep=3pt}
+\renewcommand{\arraystretch}{1.3}\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\pagestyle{fancy}\fancyhf{}\fancyhead[L]{\small\color{muted}楼里\quad 商业计划与试点合作讨论稿}\fancyhead[R]{\small\color{muted}2026.10.07}
+\fancyfoot[L]{\footnotesize\color{muted}概念与网页仿真阶段\quad 未取得客户合作或真机性能证据}\fancyfoot[R]{\color{brand}\thepage}\renewcommand{\headrulewidth}{0pt}\setlength{\headheight}{15pt}
+\ctexset{section={format=\Large\bfseries\color{ink},beforeskip=12pt,afterskip=6pt},subsection={format=\normalsize\bfseries\color{brand},beforeskip=9pt,afterskip=3pt}}
+\newcommand{\lead}[1]{\colorbox{pale}{\parbox{\dimexpr\linewidth-16pt\relax}{\vspace{6pt}#1\vspace{6pt}}}\par}
+\newcommand{\page}[2]{\clearpage{\small\bfseries\color{brand}#1}\section*{#2}}
+\newcommand{\tbl}[1]{\par\noindent\begingroup\small\begin{tabularx}{\linewidth}{#1}}
+\begin{document}
+{\small\color{brand}\bfseries LOULI\quad IDP 创业管理班／合作洽谈}
+\vspace{9pt}\par
+{\fontsize{30}{38}\selectfont\bfseries\color{ink}楼里：让下一站更清楚\par}
+{\Large\color{muted}室内导航商业计划与试点合作讨论稿\par}
+\vspace{12pt}
+\lead{\textbf{我们希望和场馆共同验证}\quad 用一层楼或一段短流程，帮助访客找到目的地，让场馆知道哪里需要改善。先形成可评估的服务，再扩展定位、系统接入与年度维护。}
+\subsection*{为什么有机会}
+医院首次就诊者需要知道“下一项做什么、去哪里、怎样到达”；商场顾客需要找到门店、设施和返回位置。找路问题是否值得付费，要以各场馆现状和试点结果判断。
+
+医院官方采购已有导航项目：洛阳东方医院2025年公告预算20万元；常州市第一人民医院2025年合同69万元。[1][2] 这些案例证明采购存在，范围各异，不能作为楼里的售价或目标客户预算。
+\subsection*{我们提出什么}
+\begin{itemize}
+\item \textbf{医院流程包}\quad 科室与服务点查询、院方确认的任务顺序、地标式路线、流程提醒。
+\item \textbf{商场到达包}\quad 门店与公共设施查询、楼层路线、无障碍路径、信息错误反馈。
+\item \textbf{增强服务}\quad 经授权再评估真实队列、停车/会员接口与手机定位；现场测试后确定验收范围。
+\end{itemize}
+\subsection*{当前证据与交付边界}
+已有医院、商场网页仿真，演示路线、多点任务和模拟队列。尚无授权客户地图、真机定位性能、生产系统接入或成交记录。管理端、真实地图配置与现场部署为拟交付项；不能把演示数值称作实际效果。
+\subsection*{这次洽谈希望得到什么}
+一次30分钟业务访谈、一层楼勘察许可、一位业务及地图维护负责人。共同确定问题、范围、验收与预算路径，之后决定是否开展试点。
+\vfill
+{\small\color{muted}2026年10月7日\quad 版本1.0\quad 价格、成本和排期为讨论假设。\par
+详细来源、客户提问与研究缺口见配套《商业调研与客户访谈手册》。}
+
+\page{01\quad 谁会购买}{医院与商场分别确认价值}
+\lead{\textbf{销售要找到两个人}\quad 愿意推动试点的业务负责人，以及能确认预算和签约路径的购买方。用户喜欢演示，还不足以形成订单。}
+\tbl{p{25mm}YY}
+&\textbf{医院}&\textbf{商场}\\\hline
+使用者&患者、家属、行动不便者&顾客、停车用户、访客\\
+业务推动人\newline （待确认）&门诊办、患者服务/导诊团队&客服运营、商业运营、会员数字化\\
+技术与签约&信息科、采购部门、院方或集成商&IT、物业、集团数字化；场馆或集团签约\\
+痛点假设&科室别名、多点任务、跨层找路、反复问路&找店/设施、跨层路线、返回停车位置\\
+首轮范围&一层楼、2—4个服务节点；扫码起点、人工流程规则&一层楼、指定门店与设施；扫码起点、目录与路线\\
+验证价值&到达成功、找路时间、问路次数、规则正确&到达成功、找店时间、客服问路、目录维护耗时\\
+收入方式&部署项目费＋年度维护；接口/定位单列&部署与目录服务＋年度维护；停车/会员单列\\
+\end{tabularx}\endgroup\par
+\subsection*{先选择能验证的问题}
+优先选择业务负责人愿意参与、地图可授权、入口可曝光、目标可测量的场景。医院检查顺序和前置要求由院方确认；商场到店不等于购买，初期不承诺营收增长。
+\subsection*{已有方案决定我们怎样进入}
+高德、百度和专业厂商已有室内地图、检索与路线能力；蜂鸟视图官方产品还提供多种导航偏好和多端模板。[3][4][5] 楼里应验证业务流程配置、地标指引与小范围服务是否带来额外价值，避免仅重复一张地图。
+\subsection*{优先渠道}
+医院：业务访谈＋信息科评估，并与有院内交付经验的集成商讨论患者服务模块。商场：运营/客服访谈＋集团数字化评估，先进入现有官方入口。专业地图/定位供应商可作为供应链候选，合作条件尚未确认。
+\subsection*{暂不进入的收入故事}
+不出售患者与位置轨迹，不以广告转化做保底承诺；不将信标硬件单卖当作已验证的主业务。先判断客户是否愿意为服务与维护付费。
+
+\page{02\quad 试点合作}{四至六周，验证一条短路线}
+\lead{\textbf{首轮建议}\quad 一层楼、20—30个目的地、固定扫码起点；使用授权地图与匿名任务记录。4—6周为双方资源到位后的计划假设，具体工期在确认范围后确定。}
+\subsection*{双方提供什么}
+\tbl{p{28mm}Y}
+场馆提供&地图授权；科室/店铺名称与通行规则；现场观察与二维码放置许可；业务、技术和维护对接人\\\hline
+楼里拟交付&路线页面与目录、扫码起点、异常回退与反馈、配置台账、培训及验收报告；相关功能按合同开发交付\\\hline
+另行确认&信标布设与真机兼容；队列/预约、停车/会员接口；部署环境、第三方许可和安全要求\\
+\end{tabularx}\endgroup\par
+\subsection*{试点如何推进}
+\begin{enumerate}
+\item \textbf{范围与基线}\quad 访谈、勘察，确认最易迷路的节点与当前找路方式，签署地图授权和指标口径。
+\item \textbf{配置与走查}\quad 整理地图/目录，验证路径与无障碍信息；场馆负责人审核流程规则。
+\item \textbf{小范围使用}\quad 在同一路线与相近时段安排基线/试点任务，记录到达、时间、问路与异常；首轮建议30—50次任务。
+\item \textbf{共同复盘}\quad 看实际改善、入口使用率、维护成本与购买路径，再决定扩展、改进或停止。
+\end{enumerate}
+\subsection*{预先确定验收，防止演示代替效果}
+目标到达率＝无额外问路到达的任务数÷有效任务数；找路时间报告中位数并注明路线、熟悉度与时段。记录二维码曝光、打开、路线开始与完成，解释用户是否愿意用。小样本只说明可行性，不直接代表全馆效果。
+
+拟议继续条件：重大路线错误为零；目标到达/时间相对基线有改善；有人维护；客户确认后续采购路径。具体阈值须在开始前共同签字，当前没有客户确认的指标。
+\subsection*{什么时候停止或缩减}
+没有地图授权、入口无法放置、无人维护、已有系统足够或关键接口不可得。首轮保留手动起点与现场导诊回退；定位和实时队列未验证时，不能承诺持续实时导航。
+
+\page{03\quad 商业模式}{按工作量报价，让一单算得清}
+\lead{\textbf{以下金额全部为内部讨论假设}\quad 尚未勘察、询价或成交，不能当作正式报价。历史医院采购金额与楼里小试点范围不同，不用于锚定售价。}
+\tbl{p{41mm}p{29mm}Y}
+\textbf{产品/服务}&\textbf{讨论金额}&\textbf{范围说明}\\\hline
+访谈＋勘察＋试点设计&0.3—0.8万元&是否抵扣部署费协商\\
+医院单层短流程试点&2—5万元&20—30个POI、扫码起点，无生产接口/实时定位\\
+商场单层到达服务&1.5—4万元&已有授权地图；无停车/会员接口\\
+年度维护&0.6—1.8万元&更新次数、响应、托管与许可边界写明\\
+全馆/定位/接口增强&另行估算&现场验证、接口确认、供应商询价后报价\\
+\end{tabularx}\endgroup\par
+\subsection*{单位经济示例：一单医院扫码路线试点}
+假设收入30,000元。12人日\,$\times$\,800元＝9,600元，地图整理2,000元，托管600元，现场差旅1,800元，测试培训2,000元，风险预留2,000元；交付成本合计18,000元。获客与商务投入另计4,000元。
+
+\textbf{增量贡献＝30,000−18,000−4,000＝8,000元（26.7\%）。}这是税前贡献，未扣研发、固定支出、折旧与融资成本，不能称为净利润。
+\tbl{Yrrrr}
+\textbf{情景}&\textbf{收入}&\textbf{交付}&\textbf{获客}&\textbf{贡献}\\\hline
+基准&30,000&18,000&4,000&8,000\\
+降价20\%&24,000&18,000&4,000&2,000\\
+增加6人日&30,000&22,800&4,000&3,200\\
+另加15\%渠道费&30,000&18,000&8,500&3,500\\
+工期与渠道同时增加&30,000&22,800&8,500&−1,300\\
+\end{tabularx}\endgroup\par
+\subsection*{签约前最值得控制的三项成本}
+限制接口与地图变更范围；问清第三方许可/托管与设备维保；确定预付款、验收付款与售后责任，减少垫资。渠道费是否与原获客投入重叠，应按合作协议重算。
+\subsection*{复购来自维护价值，仍待验证}
+年度收入12,000元、更新支持/托管等成本6,000元时，增量贡献为6,000元（假设）。续费率和获客周期未知，暂不计算客户终身价值或三年收入。先记录每单真实工时与维护需求，判断是否能复制。
+
+\page{04\quad 从演示到合作}{先取得真实购买证据}
+\lead{\textbf{下一轮的成功标准}\quad 一位愿意推动的业务负责人、一块授权场地、一个可比基线、一个明确预算/采购路径。它们比未经验证的市场规模更有用。}
+\subsection*{建议的获客节奏}
+先做6—10次跨角色访谈（工作计划，尚未完成），每次保留痛点证据、现有替代、预算状态与下一步。选一场馆做范围明确的试点；取得书面使用与成果展示许可后，再形成可分享案例。第二场馆用于验证交付与维护是否能复制。
+\subsection*{第一次会议问这六件事}
+\begin{enumerate}
+\item 最近最常见的问路有哪些？是否有客服/导诊记录？
+\item 现有地图、官方入口和供应商哪里不够用？
+\item 谁推动、谁维护、谁批预算、谁签合同？
+\item 能提供什么地图授权、现场许可与接口条件？
+\item 愿意试哪条路线，如何测量并验收？
+\item 试点通过后，用哪项预算、经过什么采购流程？
+\end{enumerate}
+\subsection*{官方渠道与当前限制}
+医院按官网当前调研/采购公告进入；本地历史市场调研显示公司材料、产品参数与售后很重要。[6] 商场先请服务台或官方账号转介运营/数字化负责人；集团客服仅为转介入口。[7] 西溪银泰城仅是未来地图导入候选，未取得地图授权、合作或当前对接人。
+
+\textbf{暂无需购买白皮书。} 免费官方资料足以支撑首轮洽谈；最大空白是客户需求、授权、预算与接入。若后续购买，优先考察医院导航采购与购物中心数字服务预算主题，先验作者、样本、年份、方法与样章，不凭市场规模图购买。
+\subsection*{来源与证据等级}
+{\footnotesize
+[1] \href{https://www.lydfyy.com/doc/11/2506/9433.html}{洛阳东方医院采购公告}（2025-06-06，预算，非成交）。\quad
+[2] \href{https://zfcg.changzhou.gov.cn/html/ns/zfjzcg_htgg/581399523463842.html}{常州市政府采购合同公告}（2025-05-13，合同）。\par
+[3] \href{https://lbs.amap.com/product/indoorintro}{高德室内地图产品}。\quad
+[4] \href{https://lbs.baidu.com/products/indoor}{百度室内地图产品}。\quad
+[5] \href{https://www.fengmap.com/navigation/}{蜂鸟视图导航导览产品}（均为官方产品说明，非独立性能测试）。\par
+[6] \href{https://www.hz-hospital.com/upload_public/20250711/202507110857549453.pdf}{杭州市第一人民医院2025年7月市场调研}（历史报名已结束）。\quad
+[7] \href{https://www.china-yintai.com/zh-CN/news/media}{银泰官方综合事项渠道}、\href{https://www.longfor.com/customer/contact.html}{龙湖官方天街服务渠道}（非采购负责人）。\par
+研究截至2026-10-07；完整案例、链接、访谈清单和缺口见配套MD。本稿无市场总量外推、无已签客户、无真实定位精度或销售增长承诺。
+}
+\end{document}

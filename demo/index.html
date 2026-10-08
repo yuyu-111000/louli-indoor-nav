@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>楼里室内导航</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed indoor floor plan on canvas; left column = search + panel (bottom sheet on phones); live positioning console bottom-right */
+:root{
+  --ground:#DCE2E7; --block:#CDD5DC; --floor:#F7F8F9; --wall:#AEB9C3;
+  --ink:#14202B; --muted:#5A6874; --faint:#8794A0;
+  --panel:#FFFFFF; --panel-2:#F1F4F6; --line:#E1E6EA;
+  --accent:#0A8A66; --accent-ink:#FFFFFF; --accent-soft:#DDF2EA; --route-edge:#05664B;
+  --me:#2D6BF0; --me-soft:rgba(45,107,240,.15);
+  --warn:#B86E00; --warn-soft:#FFF0D6; --bad:#D2433E; --bad-soft:#FDE4E2; --good:#0A8A66;
+  --c-gps:#8C96A0; --c-fp:#E07B1F; --c-pdr:#9256D8; --c-ekf:#2D6BF0; --c-truth:#14202B;
+  --t1:#FBE3D3; --t2:#E0E8FA; --t3:#F9EDC4; --t4:#D9F0E5; --t5:#EAE0F9; --t6:#E3E8EC;
+  --g1:#D2652A; --g2:#3A6BD4; --g3:#A98000; --g4:#1C8A60; --g5:#7A4CC8; --g6:#6C7884;
+  --water:#CFE6F2; --done:#A9B4BE;
+  --shadow:0 1px 2px rgba(20,32,43,.06),0 10px 28px rgba(20,32,43,.12);
+  --f-ui:"Noto Sans SC",-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --f-brand:"ZCOOL QingKe HuangYou","Noto Sans SC","PingFang SC",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0B1015; --block:#151C23; --floor:#1E262E; --wall:#33404C;
+  --ink:#E7EDF2; --muted:#9AA8B4; --faint:#6E7C88;
+  --panel:#151B21; --panel-2:#1D252D; --line:#28323C;
+  --accent:#2CCB98; --accent-ink:#04261C; --accent-soft:#123A2E; --route-edge:#0E7A5A;
+  --me:#5C8DFF; --me-soft:rgba(92,141,255,.18);
+  --warn:#F0A63A; --warn-soft:#3A2A10; --bad:#FF6B63; --bad-soft:#3D1A18; --good:#2CCB98;
+  --c-gps:#7F8A95; --c-fp:#F29A45; --c-pdr:#B486F0; --c-ekf:#5C8DFF; --c-truth:#E7EDF2;
+  --t1:#3A281D; --t2:#1F2A44; --t3:#36301A; --t4:#173327; --t5:#2B2340; --t6:#232B33;
+  --g1:#F08A4E; --g2:#7097F0; --g3:#D9B23A; --g4:#38C28D; --g5:#A780EC; --g6:#8C99A5;
+  --water:#183243; --done:#4A5661;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.45);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ground:#0B1015; --block:#151C23; --floor:#1E262E; --wall:#33404C;
+  --ink:#E7EDF2; --muted:#9AA8B4; --faint:#6E7C88;
+  --panel:#151B21; --panel-2:#1D252D; --line:#28323C;
+  --accent:#2CCB98; --accent-ink:#04261C; --accent-soft:#123A2E; --route-edge:#0E7A5A;
+  --me:#5C8DFF; --me-soft:rgba(92,141,255,.18);
+  --warn:#F0A63A; --warn-soft:#3A2A10; --bad:#FF6B63; --bad-soft:#3D1A18; --good:#2CCB98;
+  --c-gps:#7F8A95; --c-fp:#F29A45; --c-pdr:#B486F0; --c-ekf:#5C8DFF; --c-truth:#E7EDF2;
+  --t1:#3A281D; --t2:#1F2A44; --t3:#36301A; --t4:#173327; --t5:#2B2340; --t6:#232B33;
+  --g1:#F08A4E; --g2:#7097F0; --g3:#D9B23A; --g4:#38C28D; --g5:#A780EC; --g6:#8C99A5;
+  --water:#183243; --done:#4A5661;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-ui);font-size:14px;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--me);outline-offset:2px}
+#app{position:fixed;inset:0}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#map.dragging{cursor:grabbing}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* left column */
+.side{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));left:16px;bottom:16px;width:372px;display:flex;flex-direction:column;gap:10px;pointer-events:none;z-index:5}
+.side>*{pointer-events:auto}
+.topbar{padding:12px;display:flex;flex-direction:column;gap:10px;flex:none}
+.brandrow{display:flex;align-items:center;gap:10px}
+.brand{flex:none;white-space:nowrap;font-family:var(--f-brand);font-size:28px;line-height:1;color:var(--accent);letter-spacing:.04em}
+.venue-name{flex:1;display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.venue-name b{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.venue-name span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;background:var(--panel-2);border-radius:999px;padding:3px;gap:2px;flex:none}
+.seg button{border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.brandrow .seg{margin-left:auto}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel-2);border-radius:10px;padding:0 10px;height:40px}
+.search svg{flex:none;color:var(--faint)}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:14px var(--f-ui);outline:none}
+.search input::placeholder{color:var(--faint)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.fchip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.fchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+
+.panel{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.handle{display:none}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);flex:none}
+.tab{position:relative;border:0;background:none;padding:10px 12px 11px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;border-radius:2px;background:var(--accent)}
+.tab .badge{display:inline-block;min-width:17px;height:17px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--warn);color:var(--panel);font:600 11px/17px var(--f-num);text-align:center;vertical-align:1px}
+.tab.navtab{color:var(--accent)}
+.pbody{overflow-y:auto;padding:6px 0 12px;min-height:0;overscroll-behavior:contain}
+.sect-h{display:flex;align-items:baseline;justify-content:space-between;padding:10px 16px 6px;font-size:12px;font-weight:500;letter-spacing:.06em;color:var(--muted)}
+.sect-h .muted{letter-spacing:0;font-weight:400;color:var(--faint)}
+
+.poi{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;text-align:left;padding:9px 16px;cursor:pointer}
+.poi:hover{background:var(--panel-2)}
+.glyph{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--t);color:var(--g);font-weight:700;font-size:14px}
+.pmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pname{font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.star{color:var(--warn)}
+.pside{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.dist{font:500 12px var(--f-num);color:var(--ink)}
+.qchip{font-size:11px;padding:1px 7px;border-radius:6px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.qchip.warn{background:var(--warn-soft);color:var(--warn)}
+.qchip.ok{background:var(--accent-soft);color:var(--accent)}
+
+/* detail */
+.dhead{padding:6px 16px 4px;display:flex;flex-direction:column;gap:6px}
+.back{border:0;background:none;color:var(--muted);font-size:13px;padding:4px 0;cursor:pointer;align-self:flex-start;display:flex;align-items:center;gap:4px}
+.dtitle{display:flex;gap:12px;align-items:center}
+.dtitle h2{margin:0;font-size:20px;font-weight:700;text-wrap:balance}
+.dmeta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;padding:2px 8px;border-radius:6px;background:var(--panel-2);color:var(--muted)}
+.actions{display:flex;gap:8px;padding:10px 16px 4px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--panel-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);flex:1}
+.btn.primary:hover{filter:brightness(1.05);background:var(--accent)}
+.btn.on{color:var(--warn);border-color:var(--warn)}
+.btn.block{width:calc(100% - 32px);margin:8px 16px 0}
+.qbox{margin:10px 16px 0;padding:12px 14px;border-radius:12px;background:var(--warn-soft);display:flex;align-items:center;gap:12px}
+.qbox.ok{background:var(--accent-soft)}
+.qbox .qn{font:600 26px/1 var(--f-num);color:var(--warn)}
+.qbox.ok .qn{color:var(--accent)}
+.qbox .qt{font-size:12.5px;color:var(--ink);line-height:1.45}
+.deal{display:flex;align-items:center;gap:10px;margin:0 16px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.deal .dn{flex:1;min-width:0;font-size:13.5px}
+.deal .dp{font:600 17px var(--f-num);color:var(--bad)}
+.deal .do{font:12px var(--f-num);color:var(--faint);text-decoration:line-through}
+.deal .tagx{font-size:11px;color:var(--bad);border:1px solid var(--bad);border-radius:4px;padding:0 4px;flex:none}
+.menu{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px}
+.menu span{font-size:12.5px;padding:5px 10px;border-radius:8px;background:var(--panel-2)}
+.rev{display:flex;gap:10px;padding:6px 16px}
+.ava{flex:none;width:28px;height:28px;border-radius:50%;background:var(--panel-2);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.rev p{margin:0;font-size:13px;line-height:1.55}
+.rev b{font-weight:500;font-size:12px;color:var(--muted);display:block}
+.note{margin:10px 16px 0;font-size:11.5px;color:var(--faint);line-height:1.5}
+
+/* plan */
+.fav{display:flex;align-items:center;gap:10px;padding:8px 16px}
+.fav input{width:17px;height:17px;accent-color:var(--accent);flex:none}
+.fav label{flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer}
+.fav .glyph{width:28px;height:28px;border-radius:8px;font-size:12px}
+.plan{margin:12px 16px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.plan-h{padding:12px 14px;background:var(--accent-soft)}
+.plan-h b{font-size:15px}
+.plan-h div{font-size:12.5px;color:var(--muted);margin-top:3px}
+.plan-h .save{color:var(--accent);font-weight:500}
+.stop{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:start;padding:10px 14px;border-top:1px solid var(--line)}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 12px/22px var(--f-num);text-align:center}
+.stop .st{font-size:13.5px;font-weight:500}
+.stop .ss{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.stop .tm{font:500 12.5px var(--f-num)}
+.flow{margin:6px 16px 0;padding:12px 14px;border-radius:12px;background:var(--panel-2)}
+.flow ol{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.75}
+.flow .opt{color:var(--accent);font-size:11.5px;border:1px solid var(--accent);border-radius:4px;padding:0 4px;margin-left:4px}
+
+/* tickets */
+.ticket{margin:8px 16px;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.tk-top{display:flex;align-items:center;gap:14px;padding:14px}
+.tk-num{font:600 30px/1 var(--f-num);letter-spacing:.02em}
+.tk-info{flex:1;min-width:0}
+.tk-info b{font-size:14.5px;font-weight:500;display:block}
+.tk-info span{font-size:12px;color:var(--muted)}
+.tk-state{font-size:12px;font-weight:500;padding:3px 9px;border-radius:999px;background:var(--panel-2);color:var(--muted);flex:none}
+.tk-state.soon{background:var(--warn-soft);color:var(--warn)}
+.tk-state.called{background:var(--bad-soft);color:var(--bad)}
+.tk-bar{height:4px;background:var(--panel-2)}
+.tk-bar i{display:block;height:100%;background:var(--accent);transition:width .6s}
+.tk-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.tk-grid div{padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.tk-grid div+div{border-left:1px solid var(--line)}
+.tk-grid small{font-size:11px;color:var(--muted)}
+.tk-grid b{font:600 15px var(--f-num)}
+.tk-foot{display:flex;gap:8px;padding:0 14px 12px}
+.empty{padding:28px 24px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
+
+/* nav panel */
+.navsum{padding:12px 16px 4px;display:flex;align-items:baseline;gap:14px}
+.navsum .big{font:600 30px/1 var(--f-num)}
+.navsum .big small{font-size:14px;font-weight:400;color:var(--muted);margin-left:2px}
+.legs{padding:4px 16px 0}
+.leg{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px}
+.leg .sn{background:var(--panel-2);color:var(--muted)}
+.leg.cur .sn{background:var(--accent);color:var(--accent-ink)}
+.leg.done{color:var(--faint)}
+.leg.done .sn{background:var(--done);color:var(--panel)}
+
+/* nav banner */
+.navbanner{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));left:404px;width:min(420px,calc(100% - 404px - 76px));z-index:6;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow)}
+.navbanner svg{flex:none}
+.nb-main{font-size:21px;font-weight:700;line-height:1.2}
+.nb-sub{font-size:13px;opacity:.85;margin-top:2px}
+
+/* fab */
+.fab{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;display:flex;flex-direction:column;gap:8px;z-index:6}
+.fab button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.fab button.on{color:var(--me)}
+.floor{font:600 13px var(--f-num)}
+
+/* console */
+.console{position:absolute;right:16px;bottom:16px;width:330px;padding:14px;z-index:5;display:flex;flex-direction:column;gap:10px}
+.con-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+.livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:1px;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.eNow{font:600 34px/1.1 var(--f-num);color:var(--c-ekf)}
+.eNow small{font-size:15px;color:var(--muted);font-weight:400}
+.con-sub{font-size:12px;color:var(--muted)}
+.icon-btn{border:0;background:var(--panel-2);border-radius:8px;width:30px;height:30px;display:grid;place-items:center;cursor:pointer;flex:none}
+.mtab{width:100%;border-collapse:collapse;font-size:12px}
+.mtab th{font-weight:400;color:var(--faint);text-align:right;padding:2px 0 4px}
+.mtab th:first-child{text-align:left}
+.mtab td{padding:3px 0;text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.mtab td:first-child{text-align:left;font-family:var(--f-ui)}
+.mtab tr.ekf td{font-weight:600}
+.sw{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:7px;vertical-align:3px}
+#chart{width:100%;height:84px;display:block}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl .lbl{font-size:11.5px;color:var(--muted);width:40px;flex:none}
+.ctl .seg button{padding:4px 9px;font-size:11.5px}
+.lchip{border:1px solid var(--line);background:none;border-radius:6px;padding:3px 7px;font-size:11.5px;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.lchip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.lchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.sbtn{border:1px solid var(--line);background:none;border-radius:6px;padding:4px 9px;font-size:11.5px;cursor:pointer}
+.roam{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+.roam input{accent-color:var(--accent)}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:12.5px;font-weight:500;cursor:pointer;padding:0;text-align:left}
+.con-pill{display:none}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:28px;transform:translateX(calc(-50% + 186px));z-index:9;display:flex;align-items:center;gap:12px;max-width:min(480px,calc(100% - 32px));padding:11px 12px 11px 16px;border-radius:12px;background:var(--ink);color:var(--panel);font-size:13.5px;line-height:1.45;box-shadow:var(--shadow)}
+.toast button{flex:none;border:0;border-radius:8px;padding:6px 11px;background:var(--accent);color:var(--accent-ink);font-weight:500;cursor:pointer}
+
+/* about */
+.about{position:absolute;top:0;right:0;bottom:0;width:min(470px,100%);z-index:20;overflow-y:auto;border-radius:0;border-width:0 0 0 1px;padding:calc(20px + env(safe-area-inset-top,0px)) 24px 32px}
+.about h2{font-size:20px;margin:0 0 4px}
+.about h3{font-size:14px;margin:24px 0 8px;letter-spacing:.04em}
+.about p,.about li{font-size:13.5px;line-height:1.7;color:var(--ink)}
+.about p{margin:0 0 8px}
+.about ul{padding-left:18px;margin:0}
+.pipe{display:flex;flex-direction:column;gap:6px}
+.pipe div{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--panel-2)}
+.pipe b{font-size:13.5px;display:block}
+.pipe span{font-size:12.5px;color:var(--muted);line-height:1.55}
+.pipe i{font:600 12px/22px var(--f-num);font-style:normal;width:22px;height:22px;border-radius:6px;background:var(--accent);color:var(--accent-ink);text-align:center}
+.hw{display:flex;gap:16px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:14px}
+.hw-dev{flex:none;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 50% 45%,var(--panel) 0 34%,var(--panel-2) 35% 100%);border:1px solid var(--line);display:grid;place-items:center;position:relative}
+.hw-dev::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px var(--accent-soft)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.ptab{width:100%;border-collapse:collapse;font-size:12.5px}
+.ptab th,.ptab td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+.ptab th{color:var(--muted);font-weight:500}
+.closex{position:sticky;top:0;float:right;margin:-4px -8px 0 0}
+
+@media (max-width:760px){
+  .side{left:10px;right:10px;width:auto;bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}
+  .topbar{padding:10px;gap:8px}
+  .brand{font-size:24px}
+  .panel{position:fixed;left:0;right:0;bottom:0;max-height:46%;border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);transition:max-height .25s}
+  .panel.collapsed{max-height:104px}
+  .handle{display:block;border:0;background:none;padding:8px 0 0;cursor:pointer;flex:none}
+  .handle i{display:block;width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+  .navbanner{left:10px;right:62px;width:auto;top:calc(150px + env(safe-area-inset-top,0px));padding:10px 12px}
+  .nb-main{font-size:17px}
+  .fab{right:10px;top:calc(150px + env(safe-area-inset-top,0px))}
+  .fab button{width:40px;height:40px}
+  .console{display:none;left:10px;right:10px;width:auto;bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));z-index:12}
+  .console.open{display:flex}
+  .con-pill{display:flex;align-items:center;gap:6px;position:absolute;left:10px;top:calc(150px + env(safe-area-inset-top,0px));z-index:6;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);border-radius:999px;padding:7px 12px;font-size:12px;cursor:pointer}
+  .con-pill b{font-family:var(--f-num);color:var(--c-ekf)}
+  body.navving .con-pill{top:calc(214px + env(safe-area-inset-top,0px))}
+  .toast{transform:translateX(-50%);bottom:calc(46% + 12px)}
+}
+@media (prefers-reduced-motion:reduce){.livedot{animation:none}.tk-bar i{transition:none}}
+</style>
+
+<div id="app">
+  <canvas id="map" aria-label="室内地图"></canvas>
+
+  <div class="side">
+    <div class="topbar card">
+      <div class="brandrow">
+        <div class="brand">楼里</div>
+        <div class="venue-name"><b id="venueTitle">示例购物中心</b><span id="venueSub">1F · 室内导航演示</span></div>
+        <div class="seg" id="venueSeg" role="group" aria-label="切换场景">
+          <button data-v="mall" aria-pressed="true">商场</button>
+          <button data-v="hosp" aria-pressed="false">医院</button>
+        </div>
+      </div>
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="搜店铺、科室、卫生间" autocomplete="off">
+      </label>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="panel card" id="panel">
+      <button class="handle" id="handle" aria-label="展开或收起"><i></i></button>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="pbody" id="pbody"></div>
+    </div>
+  </div>
+
+  <div class="navbanner" id="navbanner" hidden>
+    <svg id="nbIcon" width="44" height="44" viewBox="0 0 44 44"></svg>
+    <div><div class="nb-main" id="nbMain"></div><div class="nb-sub" id="nbSub"></div></div>
+  </div>
+
+  <div class="fab">
+    <button class="floor" title="当前楼层" aria-label="当前楼层 1F">1F</button>
+    <button id="zin" aria-label="放大"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="zout" aria-label="缩小"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+    <button id="locate" aria-label="回到我的位置"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/></svg></button>
+    <button id="aboutFab" aria-label="技术路线与硬件"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+  </div>
+
+  <button class="con-pill" id="conPill"><span class="livedot"></span>融合误差 <b id="pillErr">–</b> m</button>
+
+  <section class="console card" id="console" aria-label="定位仿真控制台">
+    <div class="con-h">
+      <div>
+        <div class="eyebrow"><span class="livedot"></span>定位仿真 · 实时</div>
+        <div class="eNow"><span id="eNow">–</span><small> m</small></div>
+        <div class="con-sub">融合定位（EKF）当前误差</div>
+      </div>
+      <button class="icon-btn" id="conClose" aria-label="收起控制台"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <table class="mtab">
+      <thead><tr><th>方法</th><th>当前</th><th>均值</th><th>P90</th></tr></thead>
+      <tbody id="mrows"></tbody>
+    </table>
+    <canvas id="chart" aria-label="最近 60 秒误差曲线"></canvas>
+    <div class="ctl"><span class="lbl">信号源</span>
+      <div class="seg" id="srcSeg"><button data-src="wifi" aria-pressed="true">仅商场 WiFi</button><button data-src="fused" aria-pressed="false">WiFi + 楼里信标</button></div>
+    </div>
+    <div class="ctl"><span class="lbl">图层</span>
+      <button class="lchip" data-layer="truth" aria-pressed="true"><i style="background:var(--c-truth)"></i>真实位置</button>
+      <button class="lchip" data-layer="fp" aria-pressed="true"><i style="background:var(--c-fp)"></i>指纹原始</button>
+      <button class="lchip" data-layer="pdr" aria-pressed="true"><i style="background:var(--c-pdr)"></i>纯惯导</button>
+      <button class="lchip" data-layer="gps" aria-pressed="false"><i style="background:var(--c-gps)"></i>手机 GPS</button>
+      <button class="lchip" data-layer="nodes" aria-pressed="true"><i style="background:var(--faint)"></i>信号节点</button>
+    </div>
+    <div class="ctl"><span class="lbl">仿真</span>
+      <div class="seg" id="spdSeg"><button data-spd="1" aria-pressed="true">1×</button><button data-spd="2" aria-pressed="false">2×</button><button data-spd="4" aria-pressed="false">4×</button></div>
+      <button class="sbtn" id="pauseBtn">暂停</button>
+      <button class="sbtn" id="resetBtn">重置统计</button>
+    </div>
+    <div class="ctl" style="justify-content:space-between">
+      <label class="roam"><input type="checkbox" id="roamChk" checked>空闲时自动漫游</label>
+      <button class="linkbtn" id="aboutBtn">技术路线与硬件 →</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" hidden role="status"><span id="toastText"></span><button id="toastBtn" hidden></button></div>
+
+  <aside class="about card" id="about" hidden aria-label="技术路线与硬件">
+    <button class="icon-btn closex" id="aboutClose" aria-label="关闭"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="eyebrow">楼里 · 技术路线</div>
+    <h2>室内为什么定不准，楼里怎么做</h2>
+    <p class="muted">卫星信号穿不透楼板和钢结构，手机在商场、医院里常常偏出几十米，还分不清楼层。楼里优先复用场馆已有的 WiFi，用自研蓝牙信标补盲，再和手机自带的惯性传感器做融合。</p>
+    <h3>定位链路</h3>
+    <div class="pipe">
+      <div><i>1</i><p style="margin:0"><b>信号采集</b><span>扫描场馆 WiFi 热点和楼里信标的信号强度（RSSI）。WiFi 约每 2 秒一次，信标约每秒一次。</span></p></div>
+      <div><i>2</i><p style="margin:0"><b>指纹匹配 WKNN</b><span>和离线采集的信号指纹库比对，取最相似的 4 个参考点加权平均，得到绝对位置，误差 3–6 米，会跳动。</span></p></div>
+      <div><i>3</i><p style="margin:0"><b>行人航位推算 PDR</b><span>加速度计检测步伐，陀螺仪测转向，逐步推算相对位移。短时很准，但陀螺零偏会让航向慢慢漂走。</span></p></div>
+      <div><i>4</i><p style="margin:0"><b>扩展卡尔曼滤波 EKF</b><span>状态为位置和航向。每走一步做一次预测，每收到一次指纹定位做一次更新；马氏距离门限剔除离群点，按指纹置信度自适应调整观测噪声。</span></p></div>
+      <div><i>5</i><p style="margin:0"><b>地图约束</b><span>每一步推算都不许穿墙：撞墙时沿墙滑动，并据此微调航向，相当于用建筑结构校正陀螺漂移。导航时再吸附到路线上，蓝点不乱跳。</span></p></div>
+      <div><i>6</i><p style="margin:0"><b>A* 路径规划</b><span>在 0.5 米栅格上做 8 邻域 A*，并对贴墙路径加代价，路线走在通道中间；之后拉直路径，按转角生成“在某店处左转”这样的地标式指引。</span></p></div>
+      <div><i>7</i><p style="margin:0"><b>排队感知的多点规划</b><span>对清单里的店做全排列搜索，目标是总完成时间最短。需要排队的店先自动取号，路线会安排你先逛别的店，回来时正好叫号。</span></p></div>
+    </div>
+    <h3>自研硬件：楼里信标</h3>
+    <div class="hw">
+      <div class="hw-dev" aria-hidden="true"></div>
+      <dl class="kv">
+        <dt>形态</dt><dd>吸顶式低功耗蓝牙信标，免布线</dd>
+        <dt>协议</dt><dd>BLE 5.0，兼容 iBeacon，小程序可直接扫描</dd>
+        <dt>布设</dt><dd>沿主通道每 8–10 米一个，只补 WiFi 覆盖弱的区域</dd>
+        <dt>供电</dt><dd>电池或 USB 取电</dd>
+      </dl>
+    </div>
+    <p class="muted" style="margin-top:10px">这一步不能省：iOS 和微信小程序拿不到周围 WiFi 列表，但都能扫描 iBeacon。只靠 WiFi 的方案在 iPhone 上用不了，信标是让方案对所有手机都可用的那一层。</p>
+    <h3>不同终端能用什么</h3>
+    <table class="ptab">
+      <thead><tr><th>终端</th><th>WiFi 扫描</th><th>蓝牙信标</th><th>惯性传感器</th></tr></thead>
+      <tbody>
+        <tr><td>Android App / SDK</td><td>可以，但前台约 2 分钟只能扫 4 次；部分机型支持 WiFi RTT</td><td>可以</td><td>可以</td></tr>
+        <tr><td>iOS App / SDK</td><td>不可以</td><td>可以</td><td>可以</td></tr>
+        <tr><td>微信小程序</td><td>仅安卓（系统限制约 2 分钟 4 次）；iOS 要用户手动进设置页</td><td>可以</td><td>可以</td></tr>
+        <tr><td>网页 H5</td><td>不可以</td><td>不可以</td><td>可以（iOS 需授权）</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px">本页面是网页演示，信号和步伐都是仿真生成的。真机版本走微信小程序（蓝牙信标为主），或者以 SDK 形式接入大众点评、美团、高德这类 App。</p>
+    <h3>下一步</h3>
+    <ul>
+      <li>粒子滤波替代硬约束，更自然地处理墙体和窄通道</li>
+      <li>气压计判断楼层，扶梯和电梯自动切层</li>
+      <li>用众包轨迹自动更新指纹库，降低维护成本</li>
+      <li>对接商户排队系统和场馆 WiFi 控制器的位置接口</li>
+    </ul>
+    <p style="margin-top:10px"><a href="../report/index.html" target="_blank" rel="noopener" style="color:var(--accent)">需求分析、市场与营收测算 →</a></p>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* ============ utils ============ */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rad=d=>d*Math.PI/180;
+const hyp=Math.hypot;
+const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+
+/* ============ building geometry (meters) ============ */
+const BW=140,BH=84,RES=0.5,GW=BW/RES,GH=BH/RES;
+const CORR=[[14,16,126,24],[14,60,126,68],[14,16,22,68],[118,16,126,68],[62,24,78,60],[64,68,76,84],[0,38,14,46],[126,38,140,46]];
+const SLOTS=(()=>{const a=[];const add=(id,x0,y0,x1,y1,dx,dy,ix,iy)=>a.push({id,x0,y0,x1,y1,dx,dy,ix,iy,tx:dx+ix*3,ty:dy+iy*3,cx:(x0+x1)/2,cy:(y0+y1)/2});
+  for(let i=0;i<8;i++){const x=14+14*i;add('N'+(i+1),x,0,x+14,16,x+7,16,0,-1);}
+  add('NW',0,0,14,38,14,27,-1,0);add('NE',126,0,140,38,126,27,1,0);add('SW',0,46,14,84,14,56,-1,0);add('SE',126,46,140,84,126,56,1,0);
+  for(let i=0;i<4;i++){const x=14+12.5*i;add('S'+(i+1),x,68,x+12.5,84,x+6.25,68,0,1);}
+  for(let i=0;i<4;i++){const x=76+12.5*i;add('S'+(i+5),x,68,x+12.5,84,x+6.25,68,0,1);}
+  add('IW1',22,24,42,42,32,24,0,1);add('IW2',42,24,62,42,62,33,-1,0);add('IW3',22,42,42,60,32,60,0,-1);add('IW4',42,42,62,60,62,51,-1,0);
+  add('IE1',78,24,98,42,78,33,1,0);add('IE2',98,24,118,42,108,24,0,1);add('IE3',78,42,98,60,78,51,1,0);add('IE4',98,42,118,60,108,60,0,-1);
+  return a;})();
+const SL={};SLOTS.forEach(s=>SL[s.id]=s);
+const FOUNTAIN={x:70,y:35,r:3.2}, ESC=[67,45,73,55];
+const ENTR=[{x:70,y:84,t:'南门 · 主入口',a:'s'},{x:0,y:42,t:'西门',a:'w'},{x:140,y:42,t:'东门',a:'e'}];
+
+const walk=new Uint8Array(GW*GH);
+const gi=(gx,gy)=>gy*GW+gx;
+const toG=v=>Math.floor(v/RES);
+function inGrid(gx,gy){return gx>=0&&gy>=0&&gx<GW&&gy<GH;}
+function isWalk(x,y){const gx=toG(x),gy=toG(y);return inGrid(gx,gy)&&walk[gi(gx,gy)]===1;}
+function fillRect(x0,y0,x1,y1,v){for(let gy=Math.max(0,toG(y0));gy<Math.min(GH,Math.ceil(y1/RES));gy++)for(let gx=Math.max(0,toG(x0));gx<Math.min(GW,Math.ceil(x1/RES));gx++){const cx=(gx+.5)*RES,cy=(gy+.5)*RES;if(cx>x0&&cx<x1&&cy>y0&&cy<y1)walk[gi(gx,gy)]=v;}}
+function setW(x,y,v){const gx=toG(x),gy=toG(y);if(inGrid(gx,gy))walk[gi(gx,gy)]=v;}
+CORR.forEach(r=>fillRect(...r,1));
+SLOTS.forEach(s=>fillRect(s.x0+.5,s.y0+.5,s.x1-.5,s.y1-.5,1));
+for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){const x=(gx+.5)*RES,y=(gy+.5)*RES;if(hyp(x-FOUNTAIN.x,y-FOUNTAIN.y)<FOUNTAIN.r)walk[gi(gx,gy)]=0;}
+fillRect(...ESC,0);
+SLOTS.forEach(s=>{const tx=-s.iy,ty=s.ix;for(let t=-1.2;t<=1.2;t+=.2)for(let u=-1;u<=1.3;u+=.2)setW(s.dx+tx*t+s.ix*u,s.dy+ty*t+s.iy*u,1);});
+
+// clearance (chamfer distance transform, in cells)
+const clr=new Float32Array(GW*GH);
+(()=>{for(let i=0;i<clr.length;i++)clr[i]=walk[i]?1e6:0;const D=1.4142;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=gi(x,y);if(!clr[i])continue;let v=clr[i];
+    if(x>0)v=Math.min(v,clr[i-1]+1);if(y>0){v=Math.min(v,clr[i-GW]+1);if(x>0)v=Math.min(v,clr[i-GW-1]+D);if(x<GW-1)v=Math.min(v,clr[i-GW+1]+D);}clr[i]=v;}
+  for(let y=GH-1;y>=0;y--)for(let x=GW-1;x>=0;x--){const i=gi(x,y);if(!clr[i])continue;let v=clr[i];
+    if(x<GW-1)v=Math.min(v,clr[i+1]+1);if(y<GH-1){v=Math.min(v,clr[i+GW]+1);if(x<GW-1)v=Math.min(v,clr[i+GW+1]+D);if(x>0)v=Math.min(v,clr[i+GW-1]+D);}clr[i]=v;}
+})();
+
+/* ============ path planning ============ */
+class Heap{constructor(){this.i=[];this.f=[];}
+  get n(){return this.i.length;}
+  clear(){this.i.length=0;this.f.length=0;}
+  push(k,f){const I=this.i,F=this.f;let p=I.length;I.push(k);F.push(f);while(p>0){const q=(p-1)>>1;if(F[q]<=f)break;I[p]=I[q];F[p]=F[q];p=q;}I[p]=k;F[p]=f;}
+  pop(){const I=this.i,F=this.f;const top=I[0];const k=I.pop(),f=F.pop();const n=I.length;if(n){let p=0;for(;;){let c=2*p+1;if(c>=n)break;if(c+1<n&&F[c+1]<F[c])c++;if(F[c]>=f)break;I[p]=I[c];F[p]=F[c];p=c;}I[p]=k;F[p]=f;}return top;}}
+const heap=new Heap();
+const NB=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.4142],[1,-1,1.4142],[-1,1,1.4142],[-1,-1,1.4142]];
+function nearestCell(x,y){const gx=clamp(toG(x),0,GW-1),gy=clamp(toG(y),0,GH-1);if(walk[gi(gx,gy)])return gi(gx,gy);
+  for(let r=1;r<40;r++){let best=-1,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const X=gx+dx,Y=gy+dy;if(!inGrid(X,Y)||!walk[gi(X,Y)])continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=gi(X,Y);}}if(best>=0)return best;}return -1;}
+const cellPt=i=>({x:(i%GW+.5)*RES,y:((i/GW|0)+.5)*RES});
+function nearestWalkPt(x,y){return isWalk(x,y)?{x,y}:cellPt(nearestCell(x,y));}
+function wallCost(n){const c=clr[n]*RES;return c<1.6?1+(1.6-c)*1.3:1;}
+function expand(s,t,useCost){
+  const g=new Float32Array(GW*GH).fill(Infinity),came=new Int32Array(GW*GH).fill(-1),closed=new Uint8Array(GW*GH);
+  const tx=t>=0?t%GW:0,ty=t>=0?(t/GW|0):0;
+  const h=t>=0?(i=>{const dx=Math.abs(i%GW-tx),dy=Math.abs((i/GW|0)-ty);return dx+dy-0.5858*Math.min(dx,dy);}):(()=>0);
+  heap.clear();g[s]=0;heap.push(s,h(s));
+  while(heap.n){const cur=heap.pop();if(closed[cur])continue;closed[cur]=1;if(cur===t)break;const cx=cur%GW,cy=cur/GW|0;
+    for(const [dx,dy,w] of NB){const nx=cx+dx,ny=cy+dy;if(!inGrid(nx,ny))continue;const n=gi(nx,ny);if(!walk[n]||closed[n])continue;
+      if(dx&&dy&&(!walk[gi(cx+dx,cy)]||!walk[gi(cx,cy+dy)]))continue;
+      const ng=g[cur]+w*(useCost?wallCost(n):1);if(ng<g[n]){g[n]=ng;came[n]=cur;heap.push(n,ng+h(n));}}}
+  return {g,came};}
+function distField(x,y){const s=nearestCell(x,y);return expand(s,-1,false).g;}
+function los(a,b,s0,e0){const L=hyp(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(L/.25));
+  for(let i=0;i<=n;i++){const x=a.x+(b.x-a.x)*i/n,y=a.y+(b.y-a.y)*i/n;const gx=toG(x),gy=toG(y);if(!inGrid(gx,gy))return false;const k=gi(gx,gy);if(!walk[k])return false;
+    if(clr[k]*RES<0.8&&hyp(x-s0.x,y-s0.y)>2.5&&hyp(x-e0.x,y-e0.y)>2.5)return false;}return true;}
+function astar(ax,ay,bx,by){
+  const a=nearestWalkPt(ax,ay),b=nearestWalkPt(bx,by);const s=nearestCell(a.x,a.y),t=nearestCell(b.x,b.y);if(s<0||t<0)return null;
+  const {came}=expand(s,t,true);if(s!==t&&came[t]<0)return null;
+  const cells=[];for(let c=t;c!==-1;c=came[c]){cells.push(c);if(c===s)break;}cells.reverse();
+  const pts=cells.map(cellPt);pts[0]=a;pts[pts.length-1]=b;if(pts.length===1)pts.push({...b});
+  const out=[pts[0]];let i=0;const n=pts.length;
+  while(i<n-1){let j=i+1;for(let k=i+2;k<n;k++){if(los(pts[i],pts[k],a,b))j=k;else if(k-j>8)break;}out.push(pts[j]);i=j;}
+  return makeRoute(out);}
+function makeRoute(pts){const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+hyp(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y));
+  const r={pts,cum,len:cum[cum.length-1],turns:[]};
+  for(let i=1;i<pts.length-1;i++){const a=Math.atan2(pts[i].y-pts[i-1].y,pts[i].x-pts[i-1].x),b=Math.atan2(pts[i+1].y-pts[i].y,pts[i+1].x-pts[i].x);const ang=wrap(b-a);
+    if(Math.abs(ang)>rad(28))r.turns.push({s:cum[i],ang,x:pts[i].x,y:pts[i].y});}
+  return r;}
+function pointAt(r,s){s=clamp(s,0,r.len);let i=1;while(i<r.cum.length-1&&r.cum[i]<s)i++;const a=r.pts[i-1],b=r.pts[i];const L=r.cum[i]-r.cum[i-1]||1;const t=(s-r.cum[i-1])/L;
+  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,h:Math.atan2(b.y-a.y,b.x-a.x)};}
+function project(r,p){let best={d:1e9,s:0,x:p.x,y:p.y};for(let i=1;i<r.pts.length;i++){const a=r.pts[i-1],b=r.pts[i];const vx=b.x-a.x,vy=b.y-a.y;const L2=vx*vx+vy*vy||1;
+  const t=clamp(((p.x-a.x)*vx+(p.y-a.y)*vy)/L2,0,1);const x=a.x+vx*t,y=a.y+vy*t;const d=hyp(p.x-x,p.y-y);if(d<best.d)best={d,s:r.cum[i-1]+Math.sqrt(L2)*t,x,y};}return best;}
+
+/* ============ radio environment ============ */
+const APS=[];[18,36,54,70,86,104,122].forEach(x=>{APS.push({x,y:20});APS.push({x,y:64});});
+APS.push({x:18,y:34},{x:18,y:50},{x:122,y:34},{x:122,y:50},{x:70,y:28},{x:70,y:58},{x:6,y:20},{x:134,y:20},{x:6,y:66},{x:134,y:66},{x:32,y:33},{x:108,y:51});
+const BCN=[];for(let x=18;x<=122;x+=8){BCN.push({x,y:20});BCN.push({x,y:64});}
+for(let y=28;y<=56;y+=8){BCN.push({x:18,y});BCN.push({x:122,y});BCN.push({x:70,y});}
+BCN.push({x:70,y:76},{x:7,y:42},{x:133,y:42});
+const EM=[...APS.map(p=>({...p,k:'ap',P0:-38,n:2.7,sd:4.5,thr:-88})),...BCN.map(p=>({...p,k:'bl',P0:-60,n:2.2,sd:3.5,thr:-94}))];
+const AP_IDX=EM.map((e,i)=>e.k==='ap'?i:-1).filter(i=>i>=0), ALL_IDX=EM.map((e,i)=>i);
+function walls(x0,y0,x1,y1){const L=hyp(x1-x0,y1-y0),n=Math.ceil(L/.35);let prev=1,c=0;for(let i=1;i<=n;i++){const w=isWalk(x0+(x1-x0)*i/n,y0+(y1-y0)*i/n)?1:0;if(prev&&!w)c++;prev=w;}return Math.min(c,4);}
+function rssi(e,x,y){const d=hyp(e.x-x,e.y-y);if(d>46)return -100;return e.P0-10*e.n*Math.log10(Math.max(1,d))-4.5*walls(e.x,e.y,x,y);}
+const DB=(()=>{const xs=[],ys=[];for(let y=1;y<BH;y+=2)for(let x=1;x<BW;x+=2)if(isWalk(x,y)){xs.push(x);ys.push(y);}
+  const E=EM.length,v=new Float32Array(xs.length*E);
+  for(let p=0;p<xs.length;p++)for(let e=0;e<E;e++){const r=rssi(EM[e],xs[p],ys[p]);v[p*E+e]=r<EM[e].thr?-100:r;}
+  return {xs,ys,v,E,N:xs.length};})();
+function scan(x,y){return EM.map(e=>{const r=rssi(e,x,y);if(r<=-100)return -100;const m=r+gauss()*e.sd;return m<e.thr?-100:m;});}
+function wknn(meas,dims,prior){const {xs,ys,v,E,N}=DB;const K=4;const best=[];
+  for(let p=0;p<N;p++){if(prior&&hyp(xs[p]-prior.x,ys[p]-prior.y)>30)continue;let d=0;const o=p*E;for(const e of dims){const q=meas[e]-v[o+e];d+=q*q;}
+    if(best.length<K||d<best[K-1].d){best.push({p,d});best.sort((a,b)=>a.d-b.d);if(best.length>K)best.pop();}}
+  if(!best.length)return prior?wknn(meas,dims,null):null;
+  let sw=0,x=0,y=0;for(const b of best){const w=1/(Math.sqrt(b.d)+1e-3);sw+=w;x+=w*xs[b.p];y+=w*ys[b.p];}x/=sw;y/=sw;
+  let sp=0;for(const b of best){const w=1/(Math.sqrt(b.d)+1e-3);sp+=w*((xs[b.p]-x)**2+(ys[b.p]-y)**2);}
+  return {x,y,spread:Math.sqrt(sp/sw)};}
+
+/* ============ EKF: state [x, y, heading] ============ */
+const ekf={ready:false,s:[0,0,0],P:[[1,0,0],[0,1,0],[0,0,1]],rej:0};
+function ekfInit(x,y,h){ekf.s=[x,y,h];ekf.P=[[9,0,0],[0,9,0],[0,0,rad(20)**2]];ekf.ready=true;ekf.rej=0;}
+function mm(A,B){return A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s+v*B[k][j],0)));}
+const tr=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+function ekfPredict(L,dpsi){const s=ekf.s;let th=s[2]+dpsi;const c=Math.cos(th),sn=Math.sin(th);
+  const prev={x:s[0],y:s[1]};
+  const F=[[1,0,-L*sn],[0,1,L*c],[0,0,1]],G=[[c,-L*sn],[sn,L*c],[0,1]];
+  const sL=.08*L+.03,sP=rad(2.5);const Qu=[[sL*sL,0],[0,sP*sP]];
+  let P=mm(mm(F,ekf.P),tr(F));const Q=mm(mm(G,Qu),tr(G));
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)P[i][j]+=Q[i][j];P[0][0]+=.01;P[1][1]+=.01;P[2][2]+=rad(.2)**2;
+  // map constraint: a step may not cross a wall; slide along it (try nearby headings) and nudge heading toward the free direction
+  let nx,ny,ok=false;
+  for(const d of [0,15,-15,30,-30,45,-45]){const t=th+rad(d);const b={x:prev.x+L*Math.cos(t),y:prev.y+L*Math.sin(t)};
+    if(isWalk(b.x,b.y)&&!crossesWall(prev,b)){nx=b.x;ny=b.y;th+=.3*wrap(t-th);ok=true;break;}}
+  if(!ok){const q=nearestWalkPt(prev.x+L*c,prev.y+L*sn);nx=q.x;ny=q.y;}
+  ekf.s=[nx,ny,wrap(th)];ekf.P=P;}
+function ekfUpdate(zx,zy,sig){const s=ekf.s,P=ekf.P;let r2=sig*sig;
+  let S=[[P[0][0]+r2,P[0][1]],[P[1][0],P[1][1]+r2]];let det=S[0][0]*S[1][1]-S[0][1]*S[1][0];let Si=[[S[1][1]/det,-S[0][1]/det],[-S[1][0]/det,S[0][0]/det]];
+  const y=[zx-s[0],zy-s[1]];const d2=y[0]*(Si[0][0]*y[0]+Si[0][1]*y[1])+y[1]*(Si[1][0]*y[0]+Si[1][1]*y[1]);
+  if(d2>13.8){ekf.rej++;if(ekf.rej<4)return false;r2*=4;S=[[P[0][0]+r2,P[0][1]],[P[1][0],P[1][1]+r2]];det=S[0][0]*S[1][1]-S[0][1]*S[1][0];Si=[[S[1][1]/det,-S[0][1]/det],[-S[1][0]/det,S[0][0]/det]];}
+  ekf.rej=0;const K=[0,1,2].map(i=>[P[i][0]*Si[0][0]+P[i][1]*Si[1][0],P[i][0]*Si[0][1]+P[i][1]*Si[1][1]]);
+  const nx=s[0]+K[0][0]*y[0]+K[0][1]*y[1],ny=s[1]+K[1][0]*y[0]+K[1][1]*y[1];ekf.s[2]=wrap(s[2]+K[2][0]*y[0]+K[2][1]*y[1]);
+  const nP=[0,1,2].map(i=>[0,1,2].map(j=>P[i][j]-K[i][0]*P[0][j]-K[i][1]*P[1][j]));
+  for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){const m=(nP[i][j]+nP[j][i])/2;nP[i][j]=nP[j][i]=m;}ekf.P=nP;
+  const q=nearestWalkPt(nx,ny);ekf.s[0]=q.x;ekf.s[1]=q.y;return true;}
+function crossesWall(a,b){const L=hyp(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(L/.2));for(let i=1;i<n;i++)if(!isWalk(a.x+(b.x-a.x)*i/n,a.y+(b.y-a.y)*i/n))return true;return false;}
+
+/* ============ venues ============ */
+const VENUES={
+ mall:{title:'示例购物中心',sub:'1F · 28 家店铺 · 室内导航演示',unit:'桌',
+  cats:{food:['餐饮','餐',1],shop:['购物','购',2],kids:['亲子','玩',3],svc:['生活服务','服',4],ent:['超市影院','娱',5],fac:['设施','设',6]},
+  chips:[['all','全部'],['food','餐饮'],['shop','购物'],['kids','亲子'],['svc','服务'],['fac','设施']],
+  favs:['N8','N5','N3','N6','S5'],sample:{poi:'N8',num:'A032'},
+  poi:{
+   N1:{n:'拾味小馆',s:'江浙菜',c:'food',r:4.6,p:88,q:[6,4,'桌'],tags:['西湖醋鱼','适合家庭'],deals:[['双人招牌套餐',128,198],['100 元代金券',88,100]],menu:['西湖醋鱼','东坡肉','龙井虾仁','片儿川'],rev:[['小周','醋鱼酸甜刚好，等位半小时也值'],['Mia','环境安静，适合带爸妈']]},
+   N2:{n:'Basil 意式厨房',s:'西餐',c:'food',r:4.4,p:120,q:[2,5,'桌'],tags:['手工意面','约会'],deals:[['双人意面套餐',158,236]],menu:['松露奶油意面','玛格丽特披萨','提拉米苏'],rev:[['阿晴','披萨饼底很脆'],['Leo','周末晚上人多，建议提前取号']]},
+   N3:{n:'山茶',s:'茶饮',c:'food',r:4.7,p:18,q:[14,1,'单'],tags:['新品','可外带'],deals:[['任意中杯 2 杯',26,36]],menu:['山茶乌龙','栀子轻乳','桂花冷萃'],rev:[['豆豆','山茶乌龙回甘明显'],['K','高峰期出杯要等十来分钟']]},
+   N4:{n:'卫生间 · 母婴室',s:'设施',c:'fac',tags:['无障碍','母婴室','第三卫生间']},
+   N5:{n:'蓝鲸书店',s:'书店 · 文创',c:'shop',r:4.8,p:60,tags:['阅读区','文创'],deals:[['会员日新书 8 折券',0,0]],menu:['新书推荐','杭州文创','儿童绘本区'],rev:[['林','可以坐一下午'],['Yuki','文创很有杭州味']]},
+   N6:{n:'ROAM 运动',s:'运动服饰',c:'shop',r:4.3,p:399,tags:['跑鞋','会员折扣'],deals:[['满 800 减 120',0,0]],menu:['跑鞋','速干衣','瑜伽服'],rev:[['阿杰','跑鞋可以试跑'],['Sun','店员很专业']]},
+   N7:{n:'一碗面局',s:'面馆',c:'food',r:4.5,p:35,q:[3,2,'桌'],tags:['快餐','一人食'],deals:[['招牌片儿川 + 小菜',29,38]],menu:['片儿川','葱油拌面','虾爆鳝面'],rev:[['老杭州','虾爆鳝面地道'],['C','出餐快']]},
+   N8:{n:'椰林火锅',s:'椰子鸡火锅',c:'food',r:4.7,p:135,q:[9,3,'桌'],tags:['必吃榜','聚餐'],deals:[['3–4 人椰子鸡套餐',298,436],['双人套餐',168,246]],menu:['椰子鸡','竹荪','手打虾滑','清补凉'],rev:[['小鹿','椰子水很甜，鸡肉嫩'],['Tom','饭点排队久，建议先取号再去逛']]},
+   NW:{n:'鲜达超市',s:'超市',c:'ent',r:4.5,p:80,tags:['生鲜','自助结账'],deals:[['新客满 99 减 20',0,0]],menu:['生鲜','进口零食','熟食'],rev:[['王阿姨','生鲜新鲜'],['Ivy','自助结账很快']]},
+   NE:{n:'星幕影城',s:'影院 · IMAX',c:'ent',r:4.6,p:45,tags:['IMAX','情侣座'],deals:[['双人观影 + 爆米花',89,140]],menu:['IMAX 厅','杜比厅','情侣座'],rev:[['M','IMAX 厅音效好'],['阿飞','周三半价']]},
+   SW:{n:'小象乐园',s:'亲子乐园',c:'kids',r:4.6,p:128,tags:['3–10 岁','室内'],deals:[['单人畅玩 3 小时',98,158]],menu:['蹦床区','海洋球','手工课'],rev:[['朵朵妈','孩子玩得停不下来'],['L','工作日人少']]},
+   SE:{n:'PLAY+ 电玩城',s:'电玩',c:'kids',r:4.4,p:100,tags:['抓娃娃','VR'],deals:[['200 币套餐',100,150]],menu:['VR 体验','抓娃娃','音游'],rev:[['阿康','VR 项目值得玩'],['Q','币有点贵']]},
+   S1:{n:'素白生活馆',s:'家居杂货',c:'shop',r:4.5,p:70,tags:['收纳','香薰'],deals:[],menu:['收纳','床品','文具'],rev:[['Z','收纳盒好用'],['晴','设计简洁']]},
+   S2:{n:'LINE 服饰',s:'女装',c:'shop',r:4.2,p:299,tags:['新季'],deals:[['第二件 7 折',0,0]],menu:['衬衫','针织','半裙'],rev:[['小雅','版型不错'],['Ann','换季有折扣']]},
+   S3:{n:'知更眼镜',s:'眼镜 · 验光',c:'svc',r:4.6,p:500,q:[1,15,'人'],tags:['免费验光'],deals:[['配镜 + 验光套餐',399,598]],menu:['验光','镜架','隐形眼镜'],rev:[['阿宁','验光很仔细'],['Bo','取镜快']]},
+   S4:{n:'Pixel+ 数码',s:'数码体验',c:'shop',r:4.4,p:0,tags:['以旧换新'],deals:[],menu:['手机','耳机','平板'],rev:[['极客','可以随便上手试'],['D','有以旧换新']]},
+   S5:{n:'甜野烘焙',s:'面包 · 甜品',c:'food',r:4.8,p:28,q:[5,1,'单'],tags:['现烤','可外带'],deals:[['下午茶双人套餐',39,56]],menu:['海盐卷','巴斯克','肉松小贝'],rev:[['甜甜','海盐卷刚出炉很香'],['F','下午四点有新品']]},
+   S6:{n:'一叶日料',s:'日料',c:'food',r:4.6,p:160,q:[7,5,'桌'],tags:['刺身','板前'],deals:[['双人寿喜锅套餐',268,388]],menu:['三文鱼刺身','寿喜锅','鳗鱼饭'],rev:[['K','刺身很新鲜'],['Rin','板前位要早点来']]},
+   S7:{n:'Urban 鞋履',s:'鞋履',c:'shop',r:4.3,p:459,tags:['小白鞋'],deals:[],menu:['休闲鞋','皮鞋','童鞋'],rev:[['X','尺码齐全'],['Mo','可以预约试穿']]},
+   S8:{n:'服务台 · 寄存',s:'服务',c:'fac',tags:['寄存','充电宝','轮椅借用','失物招领']},
+   IW1:{n:'青提美妆',s:'美妆集合店',c:'shop',r:4.5,p:150,tags:['试妆'],deals:[['满 300 减 50',0,0]],menu:['彩妆','护肤','香水小样'],rev:[['Nina','试妆台很多'],['Y','会员积分划算']]},
+   IW2:{n:'慢岛咖啡',s:'咖啡',c:'food',r:4.7,p:32,q:[4,1,'单'],tags:['手冲','可办公'],deals:[['拿铁 + 可颂',32,48]],menu:['燕麦拿铁','手冲','可颂'],rev:[['阿川','手冲豆子不错'],['E','插座多，适合办公']]},
+   IW3:{n:'童趣玩具',s:'玩具',c:'kids',r:4.4,p:120,tags:['积木','益智'],deals:[],menu:['积木','拼图','模型'],rev:[['奶爸','积木品类多'],['G','可以试玩']]},
+   IW4:{n:'Lumi 香氛',s:'香氛',c:'shop',r:4.6,p:220,tags:['礼盒'],deals:[['香氛礼盒',199,268]],menu:['香薰蜡烛','扩香','香水'],rev:[['Joy','礼盒包装好看'],['H','味道很高级']]},
+   IE1:{n:'粤点茶楼',s:'粤菜早茶',c:'food',r:4.6,p:95,q:[11,3,'桌'],tags:['早茶','虾饺'],deals:[['双人早茶套餐',118,176]],menu:['虾饺皇','凤爪','流沙包','干炒牛河'],rev:[['广仔','虾饺皮薄'],['P','周末早上要排队']]},
+   IE2:{n:'极客电器',s:'家电',c:'shop',r:4.3,p:0,tags:['体验区'],deals:[],menu:['扫地机','咖啡机','空气净化器'],rev:[['理工男','能现场演示'],['R','价格和网上一样']]},
+   IE3:{n:'花间',s:'鲜花',c:'svc',r:4.7,p:99,tags:['同城配送'],deals:[['11 枝玫瑰花束',99,139]],menu:['花束','绿植','花艺课'],rev:[['Lily','包装很用心'],['S','可以加急']]},
+   IE4:{n:'UNIQ 基础款',s:'基础服饰',c:'shop',r:4.4,p:149,tags:['大码齐全'],deals:[],menu:['T 恤','羽绒服','家居服'],rev:[['W','基础款性价比高'],['V','试衣间多']]}
+  }},
+ hosp:{title:'示例医院 · 门诊楼',sub:'1F · 门诊、检查、药房 · 导诊演示',unit:'人',
+  cats:{clinic:['诊区','诊',2],exam:['检查','检',5],pharm:['药房','药',4],svc:['服务','服',3],emerg:['急诊','急',1],fac:['设施','设',6]},
+  chips:[['all','全部'],['clinic','诊区'],['exam','检查'],['pharm','药房'],['svc','服务'],['fac','设施']],
+  favs:['IW1','IW2','IW4','SE'],sample:{poi:'N1',num:'内 1056'},
+  flow:{labels:['挂号缴费','内科初诊','检查','内科复诊','取药'],phases:[['S1'],['N1'],['IW4','IW2','IW1'],['N1'],['SE']]},
+  poi:{
+   N1:{n:'内科门诊',s:'诊室 101–108',c:'clinic',q:[8,4,'人'],docs:['张医生 · 主任医师 · 心血管','李医生 · 副主任医师 · 消化','王医生 · 主治医师 · 呼吸'],info:['上午 8:00–12:00，下午 13:30–17:00','到达后请在诊区自助机报到']},
+   N2:{n:'外科门诊',s:'诊室 111–116',c:'clinic',q:[5,5,'人'],docs:['陈医生 · 主任医师 · 普外','周医生 · 副主任医师 · 骨科'],info:['换药请到 116 室']},
+   N3:{n:'儿科门诊',s:'诊室 121–126',c:'clinic',q:[12,3,'人'],docs:['刘医生 · 主任医师','吴医生 · 主治医师'],info:['设有儿童候诊区和母婴室']},
+   N4:{n:'卫生间',s:'设施',c:'fac',tags:['无障碍','母婴室']},
+   N5:{n:'妇产科',s:'诊室 131–136',c:'clinic',q:[6,6,'人'],docs:['赵医生 · 主任医师'],info:['产检请携带围产保健手册']},
+   N6:{n:'眼科',s:'诊室 141–144',c:'clinic',q:[4,5,'人'],docs:['孙医生 · 副主任医师'],info:['散瞳检查后请勿驾车']},
+   N7:{n:'口腔科',s:'诊室 151–158',c:'clinic',q:[3,10,'人'],docs:['郑医生 · 主任医师'],info:['洁牙需提前预约']},
+   N8:{n:'皮肤科',s:'诊室 161–164',c:'clinic',q:[7,4,'人'],docs:['钱医生 · 主治医师'],info:[]},
+   NW:{n:'急诊中心',s:'24 小时',c:'emerg',info:['胸痛、卒中绿色通道','急诊挂号在急诊中心内']},
+   NE:{n:'住院部 · 电梯厅',s:'通往住院楼',c:'svc',info:['住院楼 2–18 层','探视时间 15:00–20:00']},
+   SW:{n:'中药房',s:'中药代煎',c:'pharm',q:[3,4,'人'],info:['代煎药次日可取']},
+   SE:{n:'西药房',s:'取药窗口 1–8',c:'pharm',q:[10,1,'人'],info:['缴费后约 5 分钟可取药']},
+   S1:{n:'挂号收费处',s:'窗口 1–6',c:'svc',q:[6,1,'人'],info:['支持医保卡、医保电子凭证']},
+   S2:{n:'自助服务区',s:'自助挂号 · 缴费 · 打印',c:'svc',info:['12 台自助机']},
+   S3:{n:'医保服务',s:'异地医保 · 报销',c:'svc',q:[2,5,'人'],info:[]},
+   S4:{n:'便利店',s:'日用品 · 轻食',c:'svc',info:[]},
+   S5:{n:'康复咖啡',s:'简餐 · 饮品',c:'svc',info:[]},
+   S6:{n:'入院准备中心',s:'住院登记',c:'svc',info:['办理入院前请完成术前检查']},
+   S7:{n:'卫生间',s:'设施',c:'fac',tags:['无障碍']},
+   S8:{n:'导诊台 · 轮椅',s:'咨询 · 借轮椅',c:'fac',tags:['人工导诊','轮椅借用','陪诊预约']},
+   IW1:{n:'检验科 · 抽血',s:'采血窗口 1–10',c:'exam',q:[15,1,'人'],info:['空腹项目请在 10:00 前抽血','报告约 2 小时出']},
+   IW2:{n:'超声科 · B 超',s:'检查室 1–6',c:'exam',q:[9,4,'人'],info:['腹部 B 超需空腹']},
+   IW3:{n:'心电图室',s:'检查室 1–3',c:'exam',q:[4,3,'人'],info:[]},
+   IW4:{n:'放射科 · CT',s:'CT 1–3 室',c:'exam',q:[6,6,'人'],info:['检查前取下金属物品']},
+   IE1:{n:'内镜中心',s:'胃肠镜',c:'exam',q:[3,15,'人'],info:['需提前预约']},
+   IE2:{n:'输液室',s:'门诊输液',c:'svc',info:[]},
+   IE3:{n:'报告打印',s:'自助打印',c:'svc',info:['扫码或刷卡打印检查报告']},
+   IE4:{n:'体检中心',s:'团体 · 个人体检',c:'exam',info:['体检需空腹']}
+  }}
+};
+let vKey='mall',V=VENUES.mall;
+const P=id=>({id,...V.poi[id]});
+const catOf=p=>V.cats[p.c]||['','',6];
+const glyphStyle=p=>{const k=catOf(p)[2];return `--t:var(--t${k});--g:var(--g${k})`;};
+
+/* ============ app state ============ */
+const SPEED=1.25,STEP_L=.68,QACC=24;
+const sim={};const nav={active:false};const view={s:6,ox:0,oy:0};
+const layers={truth:true,fp:true,pdr:true,gps:false,nodes:true};
+let Q={},tickets=[],favs=[],sel=new Set(),field=null,fieldAt=-1e9,disp={x:70,y:81},follow=false,selId=null;
+const ui={tab:'near',detail:null,filter:'all',q:'',plan:null,dirty:true};
+
+function resetSim(){
+  Object.assign(sim,{t:0,speed:sim.speed||1,paused:sim.paused||false,src:sim.src||'wifi',truth:{x:70,y:81},walk:null,timers:[],lastStep:{x:70,y:81,h:-Math.PI/2,t:0},
+    gyroBias:(Math.random()<.5?-1:1)*rad(.35),pdr:null,gps:{bx:0,by:0,x:70,y:81},fix:null,raw:[],trail:{truth:[],pdr:[],ekf:[]},
+    nextScan:.2,nextGps:0,nextErr:.5,hist:[],stats:{gps:[],fp:[],pdr:[],ekf:[]},lastRoam:null,roamWait:1.5});
+  const a=Math.random()*Math.PI*2;sim.gps.bx=Math.cos(a)*24;sim.gps.by=Math.sin(a)*24;
+  const h0=-Math.PI/2+gauss()*rad(12);sim.pdr={x:70,y:81,h:h0};sim.h0=h0;
+  ekf.ready=false;disp={x:70,y:81};}
+function later(sec,fn){sim.timers.push({t:sim.t+sec,fn});}
+
+/* ============ simulation step ============ */
+function walkTo(tx,ty){const r=astar(sim.truth.x,sim.truth.y,tx,ty);if(!r)return false;sim.walk={route:r,s:0,done:false};return true;}
+function emitStep(){const T=sim.truth,ls=sim.lastStep;const L=hyp(T.x-ls.x,T.y-ls.y);const h=Math.atan2(T.y-ls.y,T.x-ls.x);
+  const dpsi=wrap(h-ls.h),dt=sim.t-ls.t;const Lm=L*(1+gauss()*.06);const dPm=dpsi+gauss()*rad(1.2)+sim.gyroBias*dt;
+  sim.lastStep={x:T.x,y:T.y,h,t:sim.t};
+  const p=sim.pdr;p.h+=dPm;p.x+=Lm*Math.cos(p.h);p.y+=Lm*Math.sin(p.h);push(sim.trail.pdr,{x:p.x,y:p.y},400);
+  if(ekf.ready)ekfPredict(Lm,dPm);push(sim.trail.truth,{x:T.x,y:T.y},400);}
+function push(a,v,n){a.push(v);if(a.length>n)a.shift();}
+function doScan(){const useB=sim.src==='fused';const m=scan(sim.truth.x,sim.truth.y);
+  const fix=wknn(m,useB?ALL_IDX:AP_IDX,ekf.ready?{x:ekf.s[0],y:ekf.s[1]}:null);if(!fix)return;
+  sim.fix=fix;push(sim.raw,{x:fix.x,y:fix.y,t:sim.t},16);
+  if(!ekf.ready){ekfInit(fix.x,fix.y,sim.h0);disp={x:fix.x,y:fix.y};return;}
+  ekfUpdate(fix.x,fix.y,clamp(fix.spread*.8+(useB?1.3:2.4),1.4,6));push(sim.trail.ekf,{x:ekf.s[0],y:ekf.s[1]},400);}
+function stepSim(h){
+  sim.t+=h;const W=sim.walk;
+  if(W&&!W.done){W.s=Math.min(W.route.len,W.s+SPEED*h);const p=pointAt(W.route,W.s);sim.truth.x=p.x;sim.truth.y=p.y;
+    const d=hyp(p.x-sim.lastStep.x,p.y-sim.lastStep.y);if(d>=STEP_L||(W.s>=W.route.len&&d>.2))emitStep();
+    if(W.s>=W.route.len){W.done=true;onWalkDone();}}
+  else if(!nav.active&&$('#roamChk').checked){sim.roamWait-=h;if(sim.roamWait<=0){roam();sim.roamWait=2.5;}}
+  sim.gyroBias+=gauss()*rad(.01)*Math.sqrt(h);
+  for(let i=sim.timers.length-1;i>=0;i--)if(sim.timers[i].t<=sim.t){const f=sim.timers[i].fn;sim.timers.splice(i,1);f();}
+  sim.nextScan-=h;if(sim.nextScan<=0){sim.nextScan+=sim.src==='fused'?1:2;doScan();}
+  sim.nextGps-=h;if(sim.nextGps<=0){sim.nextGps+=1;const g=sim.gps;g.bx+=-.03*g.bx+gauss()*2+(g.bx>0?.7:-.7);g.by+=-.03*g.by+gauss()*2;g.x=sim.truth.x+g.bx+gauss()*4;g.y=sim.truth.y+g.by+gauss()*4;}
+  sim.nextErr-=h;if(sim.nextErr<=0&&ekf.ready){sim.nextErr+=.5;const T=sim.truth;
+    const e={gps:hyp(sim.gps.x-T.x,sim.gps.y-T.y),fp:sim.fix?hyp(sim.fix.x-T.x,sim.fix.y-T.y):NaN,pdr:hyp(sim.pdr.x-T.x,sim.pdr.y-T.y),ekf:hyp(ekf.s[0]-T.x,ekf.s[1]-T.y)};
+    push(sim.hist,e,120);for(const k in e)if(!isNaN(e[k]))push(sim.stats[k],e[k],6000);}
+}
+function roam(){const cand=SLOTS.filter(s=>s.id!==sim.lastRoam&&V.poi[s.id].c!=='fac');const s=cand[Math.random()*cand.length|0];sim.lastRoam=s.id;walkTo(s.tx,s.ty);}
+function onWalkDone(){if(nav.active)arriveLeg();}
+
+/* ============ navigation ============ */
+function startNav(ids){
+  if(!ids.length)return;nav.active=true;nav.legs=ids.slice();nav.i=0;nav.waiting=false;nav.route=null;follow=true;
+  ids.forEach(id=>{const p=P(id);if(p.q&&!tickets.some(t=>t.poi===id&&t.status!=='done'))takeTicket(id,true);});
+  ui.tab='nav';ui.detail=null;ui.dirty=true;document.body.classList.add('navving');startLeg();}
+function startLeg(){const s=SL[nav.legs[nav.i]];nav.route=astar(disp.x,disp.y,s.tx,s.ty);walkTo(s.tx,s.ty);nav.waiting=false;nav.lastReroute=sim.t;selId=s.id;ui.dirty=true;}
+function arriveLeg(){const p=P(nav.legs[nav.i]);const last=nav.i>=nav.legs.length-1;
+  const t=tickets.find(t=>t.poi===p.id&&t.status!=='done');
+  toast(last?`已到达「${p.n}」，导航结束`:`已到达「${p.n}」，${t&&t.ahead>0?`前面还有 ${t.ahead} ${t.unit}，先`:''}稍作停留后前往下一站`);
+  if(last){later(2,()=>endNav(false));}else{nav.waiting=true;nav.route=null;later(3,()=>{if(!nav.active)return;nav.i++;startLeg();});}ui.dirty=true;}
+function endNav(user){nav.active=false;nav.route=null;nav.legs=[];follow=false;document.body.classList.remove('navving');$('#navbanner').hidden=true;
+  if(user&&sim.walk)sim.walk.done=true;sim.roamWait=4;if(ui.tab==='nav')ui.tab='near';ui.dirty=true;}
+function turnWord(a){const d=Math.abs(a);if(d>rad(135))return '掉头';if(d<rad(55))return a>0?'向右前方走':'向左前方走';return a>0?'右转':'左转';}
+function landmark(x,y,ex){let best=null,bd=10;for(const s of SLOTS){if(s.id===ex||V.poi[s.id].c==='fac')continue;const d=hyp(s.dx-x,s.dy-y);if(d<bd){bd=d;best=V.poi[s.id].n;}}
+  if(!best&&hyp(x-70,y-35)<12)best='中庭喷泉';return best;}
+function navInstr(){const r=nav.route;if(!r)return null;const pr=project(r,disp);const s=pr.s,remain=Math.max(0,r.len-s);const dest=P(nav.legs[nav.i]);
+  const next=r.turns.find(t=>t.s>s+.8);
+  if(next){const d=next.s-s;const w=turnWord(next.ang);const lm=landmark(next.x,next.y,dest.id);
+    return {icon:Math.abs(next.ang)>rad(135)?'u':next.ang>0?'right':'left',main:d<4?w:`${Math.round(d)} 米后${w}`,sub:lm?`在「${lm}」附近`:'沿通道继续前行',remain,s};}
+  return {icon:remain<6?'arrive':'up',main:remain<4?'即将到达':`直行 ${Math.round(remain)} 米`,sub:`到达「${dest.n}」`,remain,s};}
+const ICONS={
+  up:'<path d="M22 36V10M12 20l10-10 10 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  left:'<path d="M28 38V22a6 6 0 0 0-6-6H10M17 9l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  right:'<path d="M16 38V22a6 6 0 0 1 6-6h12M27 9l7 7-7 7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  u:'<path d="M14 38V18a8 8 0 0 1 16 0v12M23 24l7 7 7-7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  arrive:'<path d="M22 40s12-11 12-20a12 12 0 0 0-24 0c0 9 12 20 12 20z" fill="none" stroke="currentColor" stroke-width="3.5"/><circle cx="22" cy="20" r="4" fill="currentColor"/>'};
+
+/* ============ queues & tickets ============ */
+function initVenue(k){vKey=k;V=VENUES[k];Q={};for(const id in V.poi){const q=V.poi[id].q;if(q)Q[id]={n:q[0],rate:q[1],unit:q[2],acc:Math.random()*q[1]};}
+  favs=store('louli.fav.'+k)||V.favs.slice();sel=new Set(favs);tickets=[];ui.plan=null;ui.detail=null;ui.tab='near';ui.filter='all';ui.q='';$('#q').value='';selId=null;
+  if(nav.active)endNav(true);takeTicket(V.sample.poi,true,V.sample.num);
+  $('#venueTitle').textContent=V.title;$('#venueSub').textContent=V.sub;
+  document.querySelectorAll('#venueSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===k));
+  $('#chips').innerHTML=V.chips.map(([c,l])=>`<button class="fchip" data-f="${c}" aria-pressed="${c==='all'}">${l}</button>`).join('');
+  $('#q').placeholder=k==='mall'?'搜店铺、美食、卫生间':'搜科室、检查、药房';ui.dirty=true;}
+function takeTicket(id,silent,num){const p=P(id);const q=Q[id];if(!q)return;if(tickets.some(t=>t.poi===id&&t.status!=='done'))return;
+  const pre=vKey==='mall'?(q.unit==='单'?'C':'A'):catOf(p)[1];
+  const t={tid:'t'+Date.now()+Math.random(),poi:id,num:num||`${pre}${vKey==='mall'?'':' '}${String(Math.random()*900+100|0)}`,ahead:q.n,total:Math.max(1,q.n),rate:q.rate,unit:q.unit,acc:0,status:'wait'};
+  q.n++;tickets.push(t);ui.dirty=true;
+  if(!silent)toast(`已取号 ${t.num}，前面 ${t.ahead} ${t.unit}。快轮到时会按你离店的距离提前提醒`);}
+function walkMeters(id){const s=SL[id];if(field){const c=nearestCell(s.tx,s.ty);const v=field[c];if(isFinite(v))return v*RES;}return hyp(s.tx-disp.x,s.ty-disp.y)*1.3;}
+function tickQueues(dt){const m=dt*QACC/60;
+  for(const id in Q){const q=Q[id];q.acc+=m;if(q.acc>=q.rate){q.acc-=q.rate;if(q.n>0)q.n--;if(Math.random()<.8)q.n++;}}
+  for(const t of tickets){if(t.status==='done')continue;t.acc+=m;if(t.acc>=t.rate&&t.ahead>0){t.acc-=t.rate;t.ahead--;}
+    const p=P(t.poi);const waitMin=Math.max(0,t.ahead*t.rate-t.acc);const walkMin=walkMeters(t.poi)/1.1/60;
+    if(t.status==='wait'&&waitMin<=walkMin*QACC/6+2.5){t.status='soon';ui.dirty=true;
+      toast(`${t.num} 前面还剩 ${t.ahead} ${t.unit}，你离「${p.n}」${Math.round(walkMeters(t.poi))} 米，现在出发刚好`,nav.active&&nav.legs[nav.i]===t.poi?null:'现在过去',()=>startNav([t.poi]));}
+    if(t.status!=='called'&&t.ahead===0&&t.acc>=t.rate*.6){t.status='called';ui.dirty=true;toast(`${t.num} 已叫号，请到「${p.n}」${vKey==='mall'?'入座':'就诊'}`,nav.active&&nav.legs[nav.i]===t.poi?null:'带我过去',()=>startNav([t.poi]));}}}
+
+/* ============ planner ============ */
+function dwellOf(p){const D=vKey==='mall'?{food:40,shop:15,kids:30,ent:25,svc:10,fac:3}:{clinic:10,exam:8,pharm:5,svc:4,emerg:15,fac:3};let d=D[p.c]??10;if(p.q&&p.q[2]==='单')d=6;if(p.id==='IW1')d=3;return d;}
+function readyOf(id){const t=tickets.find(t=>t.poi===id&&t.status!=='done');if(t)return Math.max(0,t.ahead*t.rate-t.acc);const q=Q[id];return q?q.n*q.rate:0;}
+function perms(a){if(a.length<=1)return [a.slice()];const out=[];a.forEach((x,i)=>{const rest=a.slice(0,i).concat(a.slice(i+1));for(const p of perms(rest))out.push([x,...p]);});return out;}
+function plan(phases){
+  const flat=[];phases.forEach((ph,pi)=>ph.forEach(id=>flat.push({id,pi})));
+  const pts=[{x:disp.x,y:disp.y},...flat.map(f=>({x:SL[f.id].tx,y:SL[f.id].ty}))];
+  const cells=pts.map(p=>nearestCell(p.x,p.y));const fields=pts.map(p=>distField(p.x,p.y));
+  const D=(i,j)=>fields[i][cells[j]]*RES;
+  const ev=seq=>{let t=0,cur=0,wait=0,walkM=0,ph=-1,phStart=0;const used=new Set(),rows=[];
+    for(const k of seq){if(flat[k].pi!==ph){ph=flat[k].pi;phStart=t;}const node=k+1,d=D(cur,node);walkM+=d;t+=d/1.1/60;const id=flat[k].id,p=P(id);
+      // hospital: queue numbers for a phase are issued when that phase starts (e.g. exams after the doctor orders them)
+      const hasTk=tickets.some(t=>t.poi===id&&t.status!=='done');const ready=used.has(id)?0:(vKey==='hosp'&&ph>0&&!hasTk?phStart:0)+readyOf(id);
+      const arrive=t,w=Math.max(0,ready-t);t+=w;wait+=w;const dw=dwellOf(p);rows.push({id,arrive,wait:w,dwell:dw,walk:d,leftAtArrive:p.q?Math.max(0,Math.ceil((ready-arrive)/p.q[1])):null});t+=dw;used.add(id);cur=node;}
+    return {t,wait,walkM,rows};};
+  const idx=phases.map((_,pi)=>flat.map((f,k)=>f.pi===pi?k:-1).filter(k=>k>=0));
+  const P2=idx.map(perms);let best=null;
+  const rec=(i,acc)=>{if(i===P2.length){const r=ev(acc);if(!best||r.t<best.t)best=r;return;}for(const p of P2[i])rec(i+1,acc.concat(p));};
+  rec(0,[]);return {best,base:ev(idx.flat())};}
+
+/* ============ rendering: map ============ */
+const cv=$('#map'),ctx=cv.getContext('2d'),chart=$('#chart'),cctx=chart.getContext('2d');
+let T={},dpr=1;
+function readTheme(){const cs=getComputedStyle(document.documentElement);
+  ['ground','block','floor','wall','ink','muted','faint','panel','line','accent','route-edge','me','me-soft','warn','bad','c-gps','c-fp','c-pdr','c-ekf','c-truth','t1','t2','t3','t4','t5','t6','g1','g2','g3','g4','g5','g6','water','done']
+  .forEach(k=>T[k]=cs.getPropertyValue('--'+k).trim());}
+function resize(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const r=chart.getBoundingClientRect();chart.width=r.width*dpr;chart.height=r.height*dpr;}
+const isMob=()=>innerWidth<=760;
+function mapArea(){const W=cv.clientWidth,H=cv.clientHeight;return isMob()?{l:10,r:W-10,t:200,b:H*.54-6}:{l:404,r:W>1200?W-366:W-70,t:20,b:H-20};}
+function fit(){const a=mapArea();let s=Math.min((a.r-a.l)/BW,(a.b-a.t)/BH);if(isMob())s=Math.max(s,4.2);view.s=s;
+  const cx=isMob()?70:BW/2,cy=isMob()?62:BH/2;view.ox=(a.l+a.r)/2-cx*s;view.oy=(a.t+a.b)/2-cy*s;}
+function zoomAt(px,py,ns){ns=clamp(ns,1.5,40);const wx=(px-view.ox)/view.s,wy=(py-view.oy)/view.s;view.s=ns;view.ox=px-wx*ns;view.oy=py-wy*ns;}
+function centerOn(x,y,k){const a=mapArea();const tx=(a.l+a.r)/2-x*view.s,ty=(a.t+a.b)/2-y*view.s;view.ox+=(tx-view.ox)*k;view.oy+=(ty-view.oy)*k;}
+const W2S=(x,y)=>[view.ox+x*view.s,view.oy+y*view.s];
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+const FONT='"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+function drawMap(now){
+  const W=cv.clientWidth,H=cv.clientHeight,s=view.s;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=T.ground;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(view.ox,view.oy);ctx.scale(s,s);
+  rr(ctx,-.6,-.6,BW+1.2,BH+1.2,1.6);ctx.fillStyle=T.block;ctx.fill();ctx.lineWidth=2.2/s;ctx.strokeStyle=T.wall;ctx.stroke();
+  ctx.fillStyle=T.floor;CORR.forEach(([x0,y0,x1,y1])=>ctx.fillRect(x0,y0,x1-x0,y1-y0));
+  // atrium details
+  ctx.beginPath();ctx.arc(FOUNTAIN.x,FOUNTAIN.y,FOUNTAIN.r,0,Math.PI*2);ctx.fillStyle=T.water;ctx.fill();ctx.lineWidth=1/s;ctx.strokeStyle=T.wall;ctx.stroke();
+  ctx.fillStyle=T.block;ctx.fillRect(ESC[0],ESC[1],ESC[2]-ESC[0],ESC[3]-ESC[1]);ctx.strokeStyle=T.wall;ctx.lineWidth=1/s;
+  for(let y=ESC[1]+1;y<ESC[3];y+=1){ctx.beginPath();ctx.moveTo(ESC[0]+.6,y);ctx.lineTo(ESC[2]-.6,y);ctx.stroke();}
+  ctx.strokeRect(ESC[0],ESC[1],ESC[2]-ESC[0],ESC[3]-ESC[1]);
+  // shops
+  for(const sl of SLOTS){const p=V.poi[sl.id];const k=catOf(p)[2];ctx.fillStyle=T['t'+k];ctx.fillRect(sl.x0+.25,sl.y0+.25,sl.x1-sl.x0-.5,sl.y1-sl.y0-.5);
+    ctx.lineWidth=(sl.id===selId?2.4:1)/s;ctx.strokeStyle=sl.id===selId?T.accent:T.wall;ctx.strokeRect(sl.x0+.25,sl.y0+.25,sl.x1-sl.x0-.5,sl.y1-sl.y0-.5);
+    const tx=-sl.iy,ty=sl.ix;ctx.fillStyle=T.floor;ctx.save();ctx.translate(sl.dx,sl.dy);ctx.rotate(Math.atan2(ty,tx));ctx.fillRect(-1.1,-.45,2.2,.9);ctx.restore();}
+  // emitters
+  if(layers.nodes){for(const a of APS){ctx.strokeStyle=T.faint;ctx.lineWidth=1.3/s;for(let r=1;r<=2;r++){ctx.beginPath();ctx.arc(a.x,a.y+.5,r*.55,-Math.PI*.78,-Math.PI*.22);ctx.stroke();}ctx.beginPath();ctx.arc(a.x,a.y+.5,.18,0,7);ctx.fillStyle=T.faint;ctx.fill();}
+    if(sim.src==='fused')for(const b of BCN){const r=.55;ctx.beginPath();for(let i=0;i<6;i++){const a=Math.PI/3*i+Math.PI/6;ctx.lineTo(b.x+r*Math.cos(a),b.y+r*Math.sin(a));}ctx.closePath();ctx.fillStyle=T.accent;ctx.globalAlpha=.85;ctx.fill();ctx.globalAlpha=1;}}
+  // route
+  const showRoute=nav.active&&nav.route;
+  if(showRoute){const r=nav.route;const prog=project(r,disp).s;
+    const line=(from,to,col,w)=>{ctx.beginPath();const a=pointAt(r,from);ctx.moveTo(a.x,a.y);for(let i=1;i<r.pts.length;i++)if(r.cum[i]>from&&r.cum[i]<to)ctx.lineTo(r.pts[i].x,r.pts[i].y);const b=pointAt(r,to);ctx.lineTo(b.x,b.y);ctx.strokeStyle=col;ctx.lineWidth=w/s;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();};
+    line(0,prog,T.done,7);line(prog,r.len,T['route-edge'],9);line(prog,r.len,T.accent,6.5);
+    ctx.strokeStyle=T.panel;ctx.lineWidth=1.8/s;const step=Math.max(3,46/s);
+    for(let d=prog+step/2;d<r.len-1;d+=step){const p=pointAt(r,d),a=2.2/s*3.2;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.h);ctx.beginPath();ctx.moveTo(-a*.5,-a*.6);ctx.lineTo(a*.4,0);ctx.lineTo(-a*.5,a*.6);ctx.stroke();ctx.restore();}}
+  // plan preview
+  if(!nav.active&&ui.tab==='plan'&&ui.plan&&ui.planRoute){ctx.setLineDash([1.2,1]);ctx.strokeStyle=T.accent;ctx.lineWidth=3/s;ctx.beginPath();ui.planRoute.forEach((r,j)=>r.pts.forEach((p,i)=>(i===0&&j===0)?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)));ctx.stroke();ctx.setLineDash([]);}
+  // sim layers
+  const path=(arr,col,w,dash)=>{if(arr.length<2)return;ctx.beginPath();arr.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=col;ctx.lineWidth=w/s;ctx.setLineDash(dash||[]);ctx.stroke();ctx.setLineDash([]);};
+  if(layers.pdr){path(sim.trail.pdr,T['c-pdr'],2,[4/s,3/s]);ctx.beginPath();ctx.arc(sim.pdr.x,sim.pdr.y,3.5/s,0,7);ctx.fillStyle=T['c-pdr'];ctx.fill();}
+  if(layers.truth){path(sim.trail.truth,T['c-truth'],1.4,[1.5/s,2.5/s]);}
+  if(layers.fp){sim.raw.forEach(p=>{const a=clamp(1-(sim.t-p.t)/16,0,1);ctx.globalAlpha=a*.9;ctx.beginPath();ctx.arc(p.x,p.y,3/s,0,7);ctx.fillStyle=T['c-fp'];ctx.fill();});ctx.globalAlpha=1;}
+  if(layers.gps){const g=sim.gps;ctx.beginPath();ctx.arc(g.x,g.y,20,0,7);ctx.fillStyle=T['c-gps'];ctx.globalAlpha=.13;ctx.fill();ctx.globalAlpha=.7;ctx.lineWidth=1.2/s;ctx.strokeStyle=T['c-gps'];ctx.stroke();ctx.globalAlpha=1;ctx.beginPath();ctx.arc(g.x,g.y,5/s,0,7);ctx.fillStyle=T['c-gps'];ctx.fill();}
+  // uncertainty ellipse
+  if(ekf.ready){const P=ekf.P;const a=P[0][0],b=P[0][1],c=P[1][1];const tr2=(a+c)/2,dt=Math.sqrt(Math.max(0,((a-c)/2)**2+b*b));const l1=tr2+dt,l2=Math.max(.01,tr2-dt);const ang=.5*Math.atan2(2*b,a-c);
+    ctx.save();ctx.translate(disp.x,disp.y);ctx.rotate(ang);ctx.beginPath();ctx.ellipse(0,0,Math.max(2*Math.sqrt(l1),.6),Math.max(2*Math.sqrt(l2),.6),0,0,7);ctx.fillStyle=T['me-soft'];ctx.fill();ctx.restore();}
+  ctx.restore();
+  // ---- screen space ----
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(const sl of SLOTS){const p=V.poi[sl.id];const [cx,cy]=W2S(sl.cx,sl.cy);const w=(sl.x1-sl.x0)*s,h=(sl.y1-sl.y0)*s;if(w<20||h<20)continue;
+    const k=catOf(p)[2];const showName=w>46&&h>40;const gy=showName?cy-9:cy;
+    ctx.beginPath();ctx.arc(cx,gy,9,0,7);ctx.fillStyle=T['g'+k];ctx.fill();ctx.fillStyle=T.panel;ctx.font=`700 10.5px ${FONT}`;ctx.fillText(catOf(p)[1],cx,gy+.5);
+    if(showName){ctx.font=`500 ${s>12?13:12}px ${FONT}`;let name=p.n;while(ctx.measureText(name).width>w-8&&name.length>2)name=name.slice(0,-1);if(name!==p.n)name=name.slice(0,-1)+'…';
+      ctx.fillStyle=T.ink;ctx.fillText(name,cx,cy+9);
+      if(s>11&&h>62){ctx.font=`11px ${FONT}`;ctx.fillStyle=T.muted;ctx.fillText(p.s,cx,cy+25);}
+      const q=Q[sl.id];if(q&&s>8&&h>56){const txt=q.n>0?`等 ${q.n} ${q.unit}`:'无需等';ctx.font=`500 10.5px ${FONT}`;const tw=ctx.measureText(txt).width+10;const yy=cy+(s>11&&h>62?41:26);
+        rr(ctx,cx-tw/2,yy-8,tw,16,5);ctx.fillStyle=q.n>4?T.warn:T.accent;ctx.globalAlpha=.16;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle=q.n>4?T.warn:T.accent;ctx.fillText(txt,cx,yy+.5);}}}
+  if(s>3.5){ctx.font=`500 11px ${FONT}`;ctx.fillStyle=T.muted;for(const e of ENTR){const [x,y]=W2S(e.x,e.y);const o=e.a==='s'?[0,14]:e.a==='w'?[-26,0]:[26,0];ctx.fillText(e.t,x+o[0],y+o[1]);}
+    if(s>6){const [fx,fy]=W2S(FOUNTAIN.x,FOUNTAIN.y);ctx.fillText('中庭',fx,fy);const [ex,ey]=W2S(70,50);ctx.save();ctx.translate(ex,ey);ctx.fillStyle=T.muted;ctx.fillText('扶梯',0,0);ctx.restore();}}
+  // stops
+  const stops=nav.active?nav.legs.map((id,i)=>({id,i,done:i<nav.i})):(ui.tab==='plan'&&ui.plan?ui.plan.best.rows.map((r,i)=>({id:r.id,i,done:false})):[]);
+  const seen={};for(const st of stops){const sl=SL[st.id];const [x,y]=W2S(sl.tx,sl.ty);const off=(seen[st.id]=(seen[st.id]||0)+1)-1;const X=x+off*18;
+    ctx.beginPath();ctx.arc(X,y-16,11,0,7);ctx.fillStyle=st.done?T.done:T.accent;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.panel;ctx.stroke();ctx.beginPath();ctx.moveTo(X-4,y-7);ctx.lineTo(X,y-1);ctx.lineTo(X+4,y-7);ctx.fill();
+    ctx.fillStyle=T.panel;ctx.font=`600 11.5px "JetBrains Mono",monospace`;ctx.fillText(String(st.i+1),X,y-15.5);}
+  // truth marker
+  if(layers.truth){const [x,y]=W2S(sim.truth.x,sim.truth.y);ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.lineWidth=2;ctx.strokeStyle=T['c-truth'];ctx.stroke();}
+  // me
+  if(ekf.ready){const [x,y]=W2S(disp.x,disp.y);const h=ekf.s[2];
+    const g=ctx.createRadialGradient(x,y,0,x,y,34);g.addColorStop(0,T['me-soft']);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save();ctx.translate(x,y);ctx.rotate(h);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,34,-.5,.5);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.restore();
+    const pulse=(now/1400)%1;ctx.beginPath();ctx.arc(x,y,9+pulse*14,0,7);ctx.strokeStyle=T.me;ctx.globalAlpha=(1-pulse)*.45;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
+    ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fillStyle=T.panel;ctx.fill();ctx.beginPath();ctx.arc(x,y,6.3,0,7);ctx.fillStyle=T.me;ctx.fill();}
+  // scale bar
+  const m=s>14?5:s>6?10:20;const bx=isMob()?14:W-70-m*s-10,by=isMob()?H*.54-22:H-20;ctx.strokeStyle=T.muted;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx,by-4);ctx.lineTo(bx,by);ctx.lineTo(bx+m*s,by);ctx.lineTo(bx+m*s,by-4);ctx.stroke();
+  ctx.fillStyle=T.muted;ctx.font=`11px "JetBrains Mono",monospace`;ctx.textAlign='left';ctx.fillText(`${m} m`,bx+m*s+6,by-2);}
+
+function drawChart(){const w=chart.width/dpr,h=chart.height/dpr;if(!w)return;cctx.setTransform(dpr,0,0,dpr,0,0);cctx.clearRect(0,0,w,h);
+  const top=6,bot=h-14,left=22,ymax=12;const Y=v=>bot-(Math.min(v,ymax)/ymax)*(bot-top);
+  cctx.font=`10px "JetBrains Mono",monospace`;cctx.textAlign='right';cctx.textBaseline='middle';
+  for(const v of [0,4,8,12]){cctx.strokeStyle=T.line;cctx.lineWidth=1;cctx.beginPath();cctx.moveTo(left,Y(v));cctx.lineTo(w,Y(v));cctx.stroke();cctx.fillStyle=T.faint;cctx.fillText(v,left-5,Y(v));}
+  cctx.textAlign='left';cctx.fillText('最近 60 秒 · 米',left,h-5);
+  const H=sim.hist;if(H.length<2)return;const X=i=>left+(w-left)*(i+120-H.length)/119;
+  for(const [k,col,lw] of [['gps','c-gps',1.2],['pdr','c-pdr',1.4],['fp','c-fp',1.2],['ekf','c-ekf',2.2]]){cctx.beginPath();let st=false;H.forEach((e,i)=>{if(isNaN(e[k]))return;const x=X(i),y=Y(e[k]);st?cctx.lineTo(x,y):cctx.moveTo(x,y);st=true;});
+    cctx.strokeStyle=T[col];cctx.lineWidth=lw;cctx.stroke();}
+  const e=H[H.length-1];cctx.beginPath();cctx.arc(X(H.length-1),Y(e.ekf),3,0,7);cctx.fillStyle=T['c-ekf'];cctx.fill();}
+
+/* ============ rendering: panel ============ */
+const fmtD=m=>m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
+const fmtMin=m=>m<1?'不到 1 分钟':m<60?`${Math.round(m)} 分钟`:`${Math.floor(m/60)} 小时 ${Math.round(m%60)} 分`;
+const clock=m=>{const d=new Date(Date.now()+m*60000);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+function qChip(id){const q=Q[id];if(!q)return '';const cls=q.n>4?'warn':'ok';return `<span class="qchip ${cls}" data-live="q:${id}">${q.n>0?`等 ${q.n} ${q.unit}`:'无需等位'}</span>`;}
+function poiRow(p){const meta=[p.s];if(p.r)meta.push(`<span class="star">★</span>${p.r}`);if(p.p)meta.push(`¥${p.p}/人`);
+  return `<button class="poi" data-act="open" data-id="${p.id}"><span class="glyph" style="${glyphStyle(p)}">${catOf(p)[1]}</span><span class="pmain"><span class="pname">${esc(p.n)}</span><span class="pmeta">${meta.join(' · ')}</span></span><span class="pside"><span class="dist" data-live="d:${p.id}">${fmtD(walkMeters(p.id))}</span>${qChip(p.id)}</span></button>`;}
+function nearHTML(){const qq=ui.q.trim();let items=Object.keys(V.poi).map(P).filter(p=>(ui.filter==='all'||p.c===ui.filter)&&(!qq||(p.n+p.s+(p.tags||[]).join('')+(p.menu||[]).join('')+catOf(p)[0]).toLowerCase().includes(qq.toLowerCase())));
+  items.sort((a,b)=>walkMeters(a.id)-walkMeters(b.id));
+  if(!items.length)return `<div class="empty">没有找到「${esc(qq)}」<br>试试“火锅”“咖啡”“卫生间”</div>`;
+  return `<div class="sect-h">${qq?'搜索结果':'离你最近'}<span class="muted">按实际步行距离排序</span></div>`+items.map(poiRow).join('');}
+function detailHTML(id){const p=P(id);const isFav=favs.includes(id);const t=tickets.find(t=>t.poi===id&&t.status!=='done');const q=Q[id];
+  const meta=[];if(p.r)meta.push(`<span><span class="star">★★★★★</span> ${p.r}</span>`);if(p.p)meta.push(`<span>¥${p.p}/人</span>`);meta.push(`<span>${esc(p.s)}</span>`);
+  meta.push(`<span>步行 <b data-live="d:${id}">${fmtD(walkMeters(id))}</b> · <span data-live="w:${id}">${fmtMin(walkMeters(id)/1.1/60)}</span></span>`);
+  let h=`<div class="dhead"><button class="back" data-act="back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>返回列表</button>
+  <div class="dtitle"><span class="glyph" style="${glyphStyle(p)}">${catOf(p)[1]}</span><h2>${esc(p.n)}</h2></div><div class="dmeta">${meta.join('')}</div>
+  ${p.tags?`<div class="tags">${p.tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>`:''}</div>`;
+  const qLabel=vKey==='mall'?'取号':'取号报到';
+  h+=`<div class="actions"><button class="btn primary" data-act="go" data-id="${id}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 21l8-4 8 4z"/></svg>到这去</button>
+  <button class="btn ${isFav?'on':''}" data-act="fav" data-id="${id}">${isFav?'★ 已加清单':'☆ 加入清单'}</button>${q&&!t?`<button class="btn" data-act="take" data-id="${id}">${qLabel}</button>`:''}</div>`;
+  if(t)h+=`<div class="qbox"><div class="qn">${esc(t.num)}</div><div class="qt">你的号码 · 前面 <b data-live="ta:${t.tid}">${t.ahead}</b> ${t.unit}<br>约 <span data-live="tw:${t.tid}">${fmtMin(t.ahead*t.rate)}</span>，快到时按你的位置提醒</div></div>`;
+  else if(q)h+=`<div class="qbox ${q.n>4?'':'ok'}"><div class="qn" data-live="qn:${id}">${q.n}</div><div class="qt">${vKey==='mall'?'当前排队':'当前候诊'}（${q.unit}）<br>预计等待约 <span data-live="qw:${id}">${fmtMin(q.n*q.rate)}</span>，可以先取号再去别处</div></div>`;
+  if(p.deals&&p.deals.length){h+=`<div class="sect-h">团购与优惠<span class="muted">示例数据</span></div>`+p.deals.map(([n,pr,o])=>`<div class="deal"><span class="tagx">${pr?'团':'惠'}</span><span class="dn">${esc(n)}</span>${pr?`<span class="do">¥${o}</span><span class="dp">¥${pr}</span>`:''}</div>`).join('');}
+  if(p.menu)h+=`<div class="sect-h">${p.c==='food'?'招牌菜':'在售推荐'}</div><div class="menu">${p.menu.map(m=>`<span>${esc(m)}</span>`).join('')}</div>`;
+  if(p.docs)h+=`<div class="sect-h">今日坐诊</div><div class="menu">${p.docs.map(m=>`<span>${esc(m)}</span>`).join('')}</div>`;
+  if(p.info&&p.info.length)h+=`<div class="sect-h">就诊须知</div>`+p.info.map(x=>`<div class="rev"><p>${esc(x)}</p></div>`).join('');
+  if(p.rev)h+=`<div class="sect-h">评价<span class="muted">示例数据</span></div>`+p.rev.map(([u,x])=>`<div class="rev"><span class="ava">${esc(u[0])}</span><p><b>${esc(u)}</b>${esc(x)}</p></div>`).join('');
+  return h+`<div class="note">店铺、评价、团购均为演示数据。正式版通过开放平台接入真实商户信息。</div>`;}
+function planHTML(){let h='';
+  if(vKey==='hosp'){const f=V.flow;h+=`<div class="sect-h">今日就诊流程<span class="muted">挂号后自动生成</span></div><div class="flow"><b style="font-size:13.5px">内科 · 张医生 · 上午</b><ol>${f.phases.map((ph,i)=>`<li>${f.labels[i]}：${ph.map(id=>esc(V.poi[id].n)).join('、')}${ph.length>1?'<span class="opt">顺序自动优化</span>':''}</li>`).join('')}</ol></div>
+    <button class="btn primary block" data-act="hospplan">规划就诊路线</button>`;}
+  h+=`<div class="sect-h">${vKey==='mall'?'我的逛街清单':'常去地点'}<span class="muted">勾选后规划</span></div>`;
+  if(!favs.length)h+=`<div class="empty">清单是空的。在店铺详情里点“加入清单”。</div>`;
+  else h+=favs.map(id=>{const p=P(id);return `<div class="fav"><input type="checkbox" id="sel-${id}" data-act="sel" data-id="${id}" ${sel.has(id)?'checked':''}><label for="sel-${id}"><span class="glyph" style="${glyphStyle(p)}">${catOf(p)[1]}</span><span class="pmain"><span class="pname">${esc(p.n)}</span><span class="pmeta">${esc(p.s)} · 停留约 ${dwellOf(p)} 分钟</span></span></label>${qChip(id)}</div>`;}).join('');
+  if(favs.length)h+=`<button class="btn ${vKey==='mall'?'primary ':''}block" data-act="plan">一键规划最优顺序（考虑排队）</button>`;
+  if(ui.plan){const {best,base}=ui.plan;const save=base.t-best.t;
+    h+=`<div class="plan"><div class="plan-h"><b>全部完成约需 ${fmtMin(best.t)}</b><div>步行 ${fmtD(best.walkM)} · 排队空等 ${fmtMin(best.wait)}${save>=1?` · <span class="save">比按${vKey==="mall"?"清单":"开单"}顺序省 ${Math.round(save)} 分钟</span>`:' · 已是最优顺序'}</div></div>`+
+    best.rows.map((r,i)=>{const p=P(r.id);let sub=`步行 ${fmtD(r.walk)}`;if(r.wait>=1)sub+=` · 需等位 ${Math.round(r.wait)} 分钟`;else if(p.q&&r.leftAtArrive!==null)sub+=` · 到店时${r.leftAtArrive<=0?'正好叫号':`约剩 ${r.leftAtArrive} ${p.q[2]}`}`;sub+=` · 停留 ${r.dwell} 分钟`;
+      return `<div class="stop"><span class="sn">${i+1}</span><div><div class="st">${esc(p.n)}</div><div class="ss">${sub}</div></div><span class="tm">${clock(r.arrive)}</span></div>`;}).join('')+
+    `<div style="padding:12px 14px;border-top:1px solid var(--line)"><button class="btn primary" style="width:100%" data-act="startplan">按此顺序开始导航</button><div class="note" style="margin:8px 0 0">需要排队的店会在出发时自动取号。</div></div></div>`;}
+  return h;}
+function ticketHTML(t){const p=P(t.poi);const st={wait:['等待中',''],soon:['快到了','soon'],called:['已叫号','called']}[t.status]||['已完成',''];const pct=t.status==='called'?100:Math.round(100*(1-t.ahead/t.total));
+  return `<div class="ticket"><div class="tk-top"><span class="tk-num">${esc(t.num)}</span><div class="tk-info"><b>${esc(p.n)}</b><span>${esc(p.s)}</span></div><span class="tk-state ${st[1]}">${st[0]}</span></div>
+  <div class="tk-bar"><i data-live="tp:${t.tid}" style="width:${pct}%"></i></div>
+  <div class="tk-grid"><div><small>前面还有</small><b><span data-live="ta:${t.tid}">${t.ahead}</span> ${t.unit}</b></div><div><small>预计等待</small><b data-live="tw:${t.tid}">${fmtMin(t.ahead*t.rate)}</b></div><div><small>离你</small><b data-live="td:${t.tid}">${fmtD(walkMeters(t.poi))}</b></div></div>
+  <div class="tk-foot"><button class="btn primary" data-act="go" data-id="${t.poi}">导航到店</button><button class="btn" data-act="cancel" data-tid="${t.tid}">取消排号</button></div></div>`;}
+function queueHTML(){const act=tickets.filter(t=>t.status!=='done');let h=`<div class="sect-h">我的排号<span class="muted">演示时间加速 ×${QACC}</span></div>`;
+  if(!act.length)h+=`<div class="empty">还没有排号。在${vKey==='mall'?'餐厅':'科室'}详情里点“取号”，可以先去别处，快轮到时会提醒你。</div>`;else h+=act.map(ticketHTML).join('');
+  return h+`<div class="note">提醒时间按“你离店的步行时间 + 前面${vKey==='mall'?'桌数':'人数'} × 每${vKey==='mall'?'桌':'人'}用时”计算。离得越远，提醒越早。</div>`;}
+function navHTML(){const dest=P(nav.legs[nav.i]);
+  return `<div class="navsum"><div class="big num"><span data-live="nr">–</span><small>米</small></div><div class="big num"><span data-live="ne">–</span><small>分钟</small></div></div>
+  <div class="sect-h" style="padding-top:2px">正在前往「${esc(dest.n)}」</div>
+  <div class="legs">${nav.legs.map((id,i)=>`<div class="leg ${i<nav.i?'done':i===nav.i?'cur':''}"><span class="sn">${i+1}</span>${esc(V.poi[id].n)}${i<nav.i?' · 已到达':''}</div>`).join('')}</div>
+  <button class="btn block" data-act="endnav">结束导航</button><div class="note">导航时蓝点会吸附到路线上，偏离超过 6 米自动重新规划。</div>`;}
+function renderTabs(){const n=tickets.filter(t=>t.status!=='done').length;const tabs=[['near','附近'],['plan',vKey==='mall'?'清单':'就诊'],['queue','排队']];if(nav.active)tabs.unshift(['nav','导航中']);
+  $('#tabs').innerHTML=tabs.map(([k,l])=>`<button class="tab ${k==='nav'?'navtab':''}" role="tab" data-tab="${k}" aria-selected="${ui.tab===k&&!ui.detail}">${l}${k==='queue'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('');}
+function renderPanel(){renderTabs();const b=$('#pbody');
+  b.innerHTML=ui.detail?detailHTML(ui.detail):ui.tab==='near'?nearHTML():ui.tab==='plan'?planHTML():ui.tab==='queue'?queueHTML():nav.active?navHTML():nearHTML();ui.dirty=false;if(ui.scrollPlan){ui.scrollPlan=false;const p=b.querySelector(".plan");if(p)p.scrollIntoView({block:"start",behavior:"smooth"});}}
+function updateLive(){document.querySelectorAll('[data-live]').forEach(el=>{const [k,id]=el.dataset.live.split(':');let v=null;
+  if(k==='d')v=fmtD(walkMeters(id));else if(k==='w')v=fmtMin(walkMeters(id)/1.1/60);
+  else if(k==='q'){const q=Q[id];if(q){v=q.n>0?`等 ${q.n} ${q.unit}`:'无需等位';el.className='qchip '+(q.n>4?'warn':'ok');}}
+  else if(k==='qn')v=Q[id]?.n;else if(k==='qw')v=Q[id]?fmtMin(Q[id].n*Q[id].rate):null;
+  else if(k[0]==='t'){const t=tickets.find(t=>t.tid===id);if(!t)return;if(k==='ta')v=t.ahead;else if(k==='tw')v=fmtMin(Math.max(0,t.ahead*t.rate-t.acc));else if(k==='td')v=fmtD(walkMeters(t.poi));else if(k==='tp'){el.style.width=(t.status==='called'?100:Math.round(100*(1-t.ahead/t.total)))+'%';return;}}
+  else if(k==='nr'||k==='ne'){const I=navInstr();if(I)v=k==='nr'?Math.round(I.remain):Math.max(1,Math.round(I.remain/1.1/60));}
+  if(v!==null&&v!==undefined&&el.textContent!==String(v))el.textContent=v;});}
+function updateBanner(){const nb=$('#navbanner');if(!nav.active||nav.waiting||!nav.route){nb.hidden=true;return;}const I=navInstr();if(!I){nb.hidden=true;return;}nb.hidden=false;
+  $('#nbIcon').innerHTML=ICONS[I.icon];$('#nbMain').textContent=I.main;$('#nbSub').textContent=I.sub;}
+const MROWS=[['gps','手机 GPS'],['fp','指纹原始'],['pdr','纯惯导 PDR'],['ekf','EKF 融合']];
+function updateMetrics(){const last=sim.hist[sim.hist.length-1];const f=v=>v===undefined||isNaN(v)?'–':v.toFixed(1);
+  const st=k=>{const a=sim.stats[k];if(!a.length)return ['–','–'];const m=a.reduce((x,y)=>x+y,0)/a.length;const s=a.slice().sort((x,y)=>x-y);return [m.toFixed(1),s[Math.floor(s.length*.9)].toFixed(1)];};
+  $('#mrows').innerHTML=MROWS.map(([k,l])=>{const [m,p]=st(k);return `<tr class="${k}"><td><i class="sw" style="background:var(--c-${k})"></i>${l}</td><td>${f(last&&last[k])}</td><td>${m}</td><td>${p}</td></tr>`;}).join('');
+  const e=last?last.ekf.toFixed(1):'–';$('#eNow').textContent=e;$('#pillErr').textContent=e;}
+
+/* ============ toast ============ */
+let toastTimer=null,toastFn=null;
+function toast(text,action,fn){$('#toastText').textContent=text;const b=$('#toastBtn');b.hidden=!action;if(action)b.textContent=action;toastFn=fn||null;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,action?7000:4200);}
+$('#toastBtn').onclick=()=>{$('#toast').hidden=true;toastFn&&toastFn();};
+
+/* ============ events ============ */
+$('#pbody').addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,id=el.dataset.id;
+  if(a==='open'){ui.detail=id;selId=id;const s=SL[id];if(isMob())$('#panel').classList.remove('collapsed');focusOn(s.cx,s.cy);}
+  else if(a==='back'){ui.detail=null;selId=null;}
+  else if(a==='go'){ui.detail=null;startNav([id]);}
+  else if(a==='fav'){favs.includes(id)?(favs=favs.filter(x=>x!==id),sel.delete(id)):(favs.push(id),sel.add(id));store('louli.fav.'+vKey,favs);toast(favs.includes(id)?`已加入清单，在「${vKey==='mall'?'清单':'就诊'}」里一键规划路线`:'已移出清单');}
+  else if(a==='take')takeTicket(id);
+  else if(a==='sel'){el.checked?sel.add(id):sel.delete(id);return;}
+  else if(a==='plan'){const ids=favs.filter(x=>sel.has(x)).slice(0,7);if(!ids.length){toast('先勾选至少一个地点');return;}doPlan([ids]);}
+  else if(a==='hospplan')doPlan(V.flow.phases);
+  else if(a==='startplan'){startNav(ui.plan.best.rows.map(r=>r.id));ui.plan=null;}
+  else if(a==='endnav')endNav(true);
+  else if(a==='cancel'){tickets=tickets.filter(t=>t.tid!==el.dataset.tid);toast('已取消排号');}
+  ui.dirty=true;});
+function doPlan(phases){ui.plan=plan(phases);ui.scrollPlan=true;let pos={x:disp.x,y:disp.y};ui.planRoute=ui.plan.best.rows.map(r=>{const s=SL[r.id];const rt=astar(pos.x,pos.y,s.tx,s.ty);pos={x:s.tx,y:s.ty};return rt;}).filter(Boolean);}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;ui.tab=b.dataset.tab;ui.detail=null;selId=nav.active?selId:null;ui.dirty=true;if(isMob())$('#panel').classList.remove('collapsed');});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;ui.filter=b.dataset.f;document.querySelectorAll('#chips .fchip').forEach(x=>x.setAttribute('aria-pressed',x===b));ui.tab='near';ui.detail=null;ui.dirty=true;});
+$('#q').addEventListener('input',e=>{ui.q=e.target.value;ui.tab='near';ui.detail=null;ui.dirty=true;});
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){const b=$('#pbody .poi');if(b)b.click();}});
+$('#venueSeg').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b||b.dataset.v===vKey)return;resetSim();initVenue(b.dataset.v);toast(b.dataset.v==='hosp'?'已切换到医院门诊楼：试试「就诊」里的路线规划':'已切换到购物中心');});
+$('#srcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-src]');if(!b)return;sim.src=b.dataset.src;document.querySelectorAll('#srcSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));sim.stats={gps:[],fp:[],pdr:[],ekf:[]};
+  toast(sim.src==='fused'?'已加入楼里信标：每秒一次观测，误差统计已重置':'仅使用商场现有 WiFi：每 2 秒一次观测，误差统计已重置');});
+$('#spdSeg').addEventListener('click',e=>{const b=e.target.closest('[data-spd]');if(!b)return;sim.speed=+b.dataset.spd;document.querySelectorAll('#spdSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+document.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>{const k=b.dataset.layer;layers[k]=!layers[k];b.setAttribute('aria-pressed',layers[k]);});
+$('#pauseBtn').onclick=()=>{sim.paused=!sim.paused;$('#pauseBtn').textContent=sim.paused?'继续':'暂停';};
+$('#resetBtn').onclick=()=>{sim.stats={gps:[],fp:[],pdr:[],ekf:[]};sim.hist=[];sim.pdr={x:sim.truth.x,y:sim.truth.y,h:sim.lastStep.h};sim.trail={truth:[],pdr:[],ekf:[]};toast('统计已重置，纯惯导从当前真实位置重新起算');};
+$('#zin').onclick=()=>{const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,view.s*1.35);};
+$('#zout').onclick=()=>{const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,view.s/1.35);};
+$('#locate').onclick=()=>{follow=true;if(view.s<7){const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,8);}};
+const openAbout=()=>{$('#about').hidden=false;};$('#aboutBtn').onclick=openAbout;$('#aboutFab').onclick=openAbout;$('#aboutClose').onclick=()=>$('#about').hidden=true;
+$('#conClose').onclick=()=>{if(isMob())$('#console').classList.remove('open');else{$('#console').hidden=true;$('#conPill').style.display='flex';}};
+$('#conPill').onclick=()=>{if(isMob())$('#console').classList.toggle('open');else{$('#console').hidden=false;$('#conPill').style.display='';}};
+$('#handle').onclick=()=>$('#panel').classList.toggle('collapsed');
+addEventListener('keydown',e=>{if(e.key==='Escape')$('#about').hidden=true;});
+function focusOn(x,y){const a=mapArea();if(view.s<7)zoomAt((a.l+a.r)/2,(a.t+a.b)/2,7.5);follow=false;focusT={x,y,k:0};}
+let focusT=null;
+
+// map pointer
+const ptrs=new Map();let moved=false,pinch=null,downAt=null;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.offsetX,y:e.offsetY});downAt={x:e.offsetX,y:e.offsetY};moved=false;cv.classList.add('dragging');
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:hyp(a.x-b.x,a.y-b.y)||1,s:view.s,wx:((a.x+b.x)/2-view.ox)/view.s,wy:((a.y+b.y)/2-view.oy)/view.s};}});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pv=ptrs.get(e.pointerId),cur={x:e.offsetX,y:e.offsetY};ptrs.set(e.pointerId,cur);
+  if(ptrs.size===1){if(hyp(cur.x-downAt.x,cur.y-downAt.y)>4)moved=true;if(moved){view.ox+=cur.x-pv.x;view.oy+=cur.y-pv.y;follow=false;focusT=null;}}
+  else if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const ns=clamp(pinch.s*hyp(a.x-b.x,a.y-b.y)/pinch.d,1.5,40);view.s=ns;view.ox=(a.x+b.x)/2-pinch.wx*ns;view.oy=(a.y+b.y)/2-pinch.wy*ns;moved=true;follow=false;focusT=null;}});
+const up=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)cv.classList.remove('dragging');if(!moved&&e.type==='pointerup')tap(e.offsetX,e.offsetY);};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,view.s*Math.exp(-e.deltaY*.0015));focusT=null;},{passive:false});
+function tap(px,py){const x=(px-view.ox)/view.s,y=(py-view.oy)/view.s;const sl=SLOTS.find(s=>x>=s.x0&&x<=s.x1&&y>=s.y0&&y<=s.y1);
+  if(sl){ui.detail=sl.id;selId=sl.id;ui.dirty=true;if(isMob())$('#panel').classList.remove('collapsed');}}
+
+/* ============ main loop ============ */
+let lastT=performance.now(),uiAcc=0,liveAcc=0,fieldAcc=0;
+function frame(now){const dt=Math.min(.1,(now-lastT)/1000);lastT=now;
+  if(!sim.paused){let r=dt*sim.speed;while(r>1e-6){const h=Math.min(.05,r);stepSim(h);r-=h;}}
+  if(!sim.paused)tickQueues(dt);
+  // displayed position: EKF estimate, snapped to the route while navigating
+  if(ekf.ready){let tx=ekf.s[0],ty=ekf.s[1];if(nav.active&&nav.route){const pr=project(nav.route,{x:tx,y:ty});if(pr.d<3){tx=pr.x;ty=pr.y;}
+      if(pr.d>6&&sim.t-nav.lastReroute>3&&!nav.waiting){nav.lastReroute=sim.t;const s=SL[nav.legs[nav.i]];nav.route=astar(ekf.s[0],ekf.s[1],s.tx,s.ty);toast('已偏离路线，已重新规划');}}
+    const k=Math.min(1,dt*8);disp.x+=(tx-disp.x)*k;disp.y+=(ty-disp.y)*k;}
+  if(follow&&ekf.ready)centerOn(disp.x,disp.y,Math.min(1,dt*3));
+  if(focusT){centerOn(focusT.x,focusT.y,Math.min(1,dt*6));focusT.k+=dt;if(focusT.k>.8)focusT=null;}
+  fieldAcc+=dt;if(fieldAcc>2.5&&ekf.ready){fieldAcc=0;field=distField(disp.x,disp.y);}
+  if(ui.dirty)renderPanel();
+  uiAcc+=dt;if(uiAcc>.25){uiAcc=0;updateBanner();}
+  liveAcc+=dt;if(liveAcc>.5){liveAcc=0;updateLive();updateMetrics();drawChart();}
+  drawMap(now);requestAnimationFrame(frame);}
+
+readTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+resetSim();initVenue('mall');resize();fit();
+new ResizeObserver(()=>{resize();}).observe(cv);
+addEventListener('resize',()=>{resize();fit();});
+if(document.fonts)document.fonts.ready.then(()=>{});
+requestAnimationFrame(frame);
+</script>
+
+</html>

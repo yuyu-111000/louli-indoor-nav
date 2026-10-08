@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 室内导航产品展示</title><link rel="stylesheet" href="styles/showcase.css"></head>
+<body>
+<header class="site-header"><a class="brand" href="./">楼里<span>LOULI</span></a><nav aria-label="展示导航"><a href="demo.html" id="exploreLink">自由体验</a><a href="data-console.html">演示数据</a><button id="materialsBtn">合作资料</button></nav><span class="demo-label">产品概念 · 仿真演示</span></header>
+<main class="showcase">
+  <aside class="story-panel">
+    <div class="eyebrow">INDOOR WAYFINDING</div>
+    <h1>在楼里，<br>知道下一步<br><em>去哪里。</em></h1>
+    <div class="scene-switch" aria-label="场景"><button data-venue="hosp" aria-pressed="true">医院就诊</button><button data-venue="mall" aria-pressed="false">商场逛店</button></div>
+    <div class="story-copy" aria-live="polite"><div class="chapter-number" id="chapterNumber">01 / 04</div><h2 id="chapterTitle">正在加载场馆</h2><p id="chapterCaption">路线、就诊任务与排队提醒，在同一个体验里。</p></div>
+    <ol class="task-list" id="taskList"></ol>
+    <div class="playback"><button class="primary" id="playBtn" disabled>播放功能演示</button><button class="next" id="nextBtn" disabled aria-label="下一步">下一步 ↗</button></div>
+    <div class="progress" id="progress" aria-label="演示章节"></div>
+    <button class="reset" id="restartBtn">↺ 重新开始</button>
+    <p class="source-note" id="sourceNote">示例场馆 · 模拟队列与位置</p>
+  </aside>
+  <section class="map-stage" aria-label="地图功能演示">
+    <div class="stage-heading"><div><small id="venueType">就诊导航</small><h2 id="venueName">示例门诊楼</h2></div><span id="apiStatus">连接数据中</span></div>
+    <iframe id="demoFrame" title="室内地图与导航演示"></iframe>
+    <div class="hardware-overlay" id="hardwareOverlay" hidden><img src="assets/hardware-concept.png" alt="楼里信标概念外观"><div><small>硬件概念</small><h3>场馆内的位置参考点</h3><p>部署在入口、路口与服务点附近。<br>首轮用现成信标验证，再推进定制。</p></div></div>
+    <div class="map-footer"><span>地图可拖动与缩放</span><span id="demoFeature">流程导航 / 地标指引 / 返回提醒</span></div>
+  </section>
+</main>
+<dialog id="materials"><div class="dialog-head"><h2>合作资料</h2><button id="closeMaterials" aria-label="关闭">×</button></div><p>用产品体验开始讨论，从一个楼层验证合作价值。</p><a href="materials/hardware-design.pdf" target="_blank">硬件设计与原型路线 <span>PDF ↗</span></a><a href="materials/business-plan.pdf" target="_blank">产品与试点合作计划 <span>PDF ↗</span></a><a href="materials/commercial-research.pdf" target="_blank">商业调研与客户访谈 <span>PDF ↗</span></a><a href="materials/bom.csv" download>硬件 BOM <span>CSV ↓</span></a><a href="data-console.html">地图与演示数据导入 <span>打开 ↗</span></a><div class="pilot"><b>首轮合作建议</b><p>选一个楼层、一段就诊或逛店流程，确认地图、业务对接人和测试范围，再形成具体试点方案。</p></div></dialog>
+<script type="module" src="js/showcase.js"></script>
+</body></html>

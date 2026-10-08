@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "venue": {
+    "id": "custom-map",
+    "name": "自定义示例 · 60×40 米",
+    "type": "mall",
+    "source": "synthetic",
+    "description": "格式与导入演示，非西溪银泰真实地图"
+  },
+  "map": {
+    "width": 60,
+    "height": 40,
+    "resolution": 0.5,
+    "start": {
+      "x": 30,
+      "y": 35
+    },
+    "corridors": [
+      [
+        0,
+        16,
+        60,
+        24
+      ],
+      [
+        26,
+        0,
+        34,
+        40
+      ]
+    ],
+    "rooms": [
+      {
+        "id": "demo-cafe",
+        "x0": 4,
+        "y0": 2,
+        "x1": 22,
+        "y1": 16,
+        "dx": 13,
+        "dy": 16,
+        "ix": 0,
+        "iy": 1
+      },
+      {
+        "id": "demo-store",
+        "x0": 38,
+        "y0": 2,
+        "x1": 56,
+        "y1": 16,
+        "dx": 47,
+        "dy": 16,
+        "ix": 0,
+        "iy": 1
+      },
+      {
+        "id": "demo-help",
+        "x0": 4,
+        "y0": 24,
+        "x1": 22,
+        "y1": 38,
+        "dx": 13,
+        "dy": 24,
+        "ix": 0,
+        "iy": -1
+      }
+    ],
+    "fountain": {
+      "x": 1,
+      "y": 1,
+      "r": 0
+    },
+    "escalator": [
+      57,
+      1,
+      59,
+      3
+    ],
+    "entrances": [
+      {
+        "x": 30,
+        "y": 40,
+        "t": "示例入口",
+        "a": "up"
+      }
+    ]
+  },
+  "catalog": {
+    "title": "自定义示例 · 60×40 米",
+    "sub": "自定义导入示例 · 非真实场馆",
+    "unit": "个地点",
+    "cats": {
+      "food": [
+        "餐饮",
+        "咖",
+        1
+      ],
+      "shop": [
+        "零售",
+        "店",
+        3
+      ],
+      "service": [
+        "服务",
+        "服",
+        2
+      ]
+    },
+    "chips": [
+      [
+        "all",
+        "全部"
+      ],
+      [
+        "food",
+        "餐饮"
+      ],
+      [
+        "shop",
+        "零售"
+      ],
+      [
+        "service",
+        "服务"
+      ]
+    ],
+    "favs": [
+      "demo-cafe",
+      "demo-store",
+      "demo-help"
+    ],
+    "sample": {
+      "poi": "demo-cafe",
+      "num": "DEMO 001"
+    },
+    "poi": {
+      "demo-cafe": {
+        "n": "示例咖啡",
+        "s": "虚构店铺",
+        "c": "food",
+        "q": [
+          6,
+          2,
+          "桌"
+        ]
+      },
+      "demo-store": {
+        "n": "示例生活店",
+        "s": "虚构店铺",
+        "c": "shop"
+      },
+      "demo-help": {
+        "n": "示例服务台",
+        "s": "虚构服务点",
+        "c": "service"
+      }
+    }
+  },
+  "queues": [
+    {
+      "poiId": "demo-cafe",
+      "ahead": 6,
+      "minutesPerPerson": 2,
+      "unit": "桌"
+    }
+  ]
+}
