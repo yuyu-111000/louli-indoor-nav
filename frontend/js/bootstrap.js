@@ -2,7 +2,7 @@ import {loadVenue,readQueues} from './api.js';
 const params=new URLSearchParams(location.search);
 const modules=['utils','geometry','routing','positioning','catalog','simulation','navigation','queues','planner','map-renderer','panel-renderer','interactions','loop','demo-bridge'];
 async function start() {
-  const session=await loadVenue(params.get('venue')||'hosp');
+  const session=await loadVenue(params.get('venue')||'yintai-demo');
   window.LouliSession={...session,queueSource:session.connected?'api':'local',embed:params.has('embed')};
   document.body.classList.toggle('embedded',window.LouliSession.embed);
   for(const name of modules)await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`js/${name}.js`;script.onload=resolve;script.onerror=()=>reject(new Error(`模块加载失败：${name}`));document.body.append(script);});

@@ -84,16 +84,71 @@ def validate_queues(queues, poi):
     return copy.deepcopy(queues)
 
 
+ANCHOR_STATUS = {'outdoor_anchor_real_osm', 'hospital_polygon_real_osm', 'nearby_entrance_poi_real_osm', 'official_address_campus_anchor_osm'}
+
+
+def map_url(value):
+    string(value, 'map URL')
+    try:
+        url = urlsplit(value)
+    except ValueError:
+        raise ValidationError('Invalid map URL')
+    require(url.scheme == 'https' and url.hostname in ('www.openstreetmap.org', 'openstreetmap.org') and not url.username and not url.password, 'Map URL must be an HTTPS OpenStreetMap link')
+
+
+def validate_location(location):
+    object_fields(location, ('crs', 'lat', 'lon', 'address', 'mapUrl', 'dataStatus', 'distanceStraightM', 'anchorId'), path='venue.location')
+    require(location['crs'] == 'WGS84', 'Location coordinates must be WGS84')
+    number(location['lat'], 'latitude', -90, 90); number(location['lon'], 'longitude', -180, 180)
+    number(location['distanceStraightM'], 'straight-line distance', 0, 40000000)
+    string(location['address'], 'address'); string(location['anchorId'], 'anchor id', 64)
+    require(isinstance(location['dataStatus'], str) and location['dataStatus'] in ANCHOR_STATUS, 'Unrecognised anchor status')
+    map_url(location['mapUrl'])
+
+
+def validate_nearby(data):
+    json_limits(data)
+    object_fields(data, ('schemaVersion', 'crs', 'origin', 'venues'), path='nearby catalog')
+    require(type(data['schemaVersion']) is int and data['schemaVersion'] == 1 and data['crs'] == 'WGS84', 'Nearby catalog requires schemaVersion 1 and WGS84')
+    origin = data['origin']
+    object_fields(origin, ('id', 'name', 'lat', 'lon'), path='origin')
+    string(origin['id'], 'origin id', 64); string(origin['name'], 'origin name', 200)
+    number(origin['lat'], 'origin latitude', -90, 90); number(origin['lon'], 'origin longitude', -180, 180)
+    sequence(data['venues'], 'nearby venues', 100)
+    result = copy.deepcopy(data); seen = set()
+    for venue in result['venues']:
+        object_fields(venue, ('id', 'name', 'category', 'address', 'lat', 'lon', 'data_status', 'map_url'), ('source_url', 'distance_straight_m'), path='nearby venue')
+        string(venue['id'], 'venue id', 64); string(venue['name'], 'venue name', 200); string(venue['address'], 'venue address')
+        require(venue['id'] not in seen, 'Nearby venue ids must be unique'); seen.add(venue['id'])
+        require(venue['category'] in ('mall', 'hospital'), 'Nearby category must be mall or hospital')
+        number(venue['lat'], 'venue latitude', -90, 90); number(venue['lon'], 'venue longitude', -180, 180)
+        require(isinstance(venue['data_status'], str) and venue['data_status'] in ANCHOR_STATUS, 'Unrecognised nearby anchor status'); map_url(venue['map_url'])
+        if 'source_url' in venue:
+            string(venue['source_url'], 'source URL')
+            require(urlsplit(venue['source_url']).scheme == 'https', 'Source URL requires HTTPS')
+        lat1, lat2 = math.radians(origin['lat']), math.radians(venue['lat'])
+        dlat = lat2 - lat1; dlon = math.radians(venue['lon'] - origin['lon'])
+        a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+        venue['distance_straight_m'] = round(6371008.8 * 2 * math.asin(math.sqrt(min(1, max(0, a)))), 1)
+    result['venues'].sort(key=lambda v: (v['distance_straight_m'], v['id']))
+    return result
+
+
 def validate_bundle(bundle):
     json_limits(bundle)
     object_fields(bundle, ('schemaVersion', 'venue', 'map', 'catalog', 'queues'), ('flow',), 'bundle')
     require(type(bundle['schemaVersion']) is int and bundle['schemaVersion'] == 1, 'schemaVersion must be 1')
     venue = bundle['venue']
-    object_fields(venue, ('id', 'name', 'type', 'source'), ('description',), 'venue')
+    object_fields(venue, ('id', 'name', 'type', 'source'), ('description', 'location', 'indoorStatus'), 'venue')
     require(isinstance(venue['id'], str) and SLUG.fullmatch(venue['id']), 'venue.id must be a safe lowercase slug of at most 64 characters')
     string(venue['name'], 'venue.name', 200)
     require(venue['type'] in ('hospital', 'mall'), 'venue.type must be hospital or mall')
     require(venue['source'] in ('synthetic', 'user-provided'), 'venue.source must be synthetic or user-provided')
+    if 'indoorStatus' in venue:
+        require(venue['indoorStatus'] in ('demo_simulated', 'user_provided'), 'Indoor status must be explicit')
+    if 'location' in venue:
+        require('indoorStatus' in venue, 'A located venue must label its indoor geometry status')
+        validate_location(venue['location'])
     if 'description' in venue:
         string(venue['description'], 'venue.description', empty=True)
     m = bundle['map']
@@ -361,6 +416,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200, {'status': 'ok', 'apiVersion': 1, 'storage': 'sqlite', 'localOnly': True})
         if path == '/api/v1/venues' and method == 'GET':
             return self.respond(200, {'venues': store.list_venues()})
+        if path == '/api/v1/nearby-venues' and method == 'GET':
+            catalog = self.server.data_dir / 'context' / 'nearby-venues.json'
+            if not catalog.exists():
+                return self.respond(200, {'schemaVersion': 1, 'crs': 'WGS84', 'origin': None, 'venues': []})
+            require(catalog.stat().st_size <= MAX_BODY, 'Nearby catalog exceeds 2 MiB')
+            try:
+                data = json.loads(catalog.read_text(encoding='utf-8'))
+            except (ValueError, UnicodeDecodeError) as exc:
+                raise ValidationError('Nearby catalog is not valid UTF-8 JSON') from exc
+            return self.respond(200, validate_nearby(data))
         match = re.fullmatch(r'/api/v1/venues/([a-z0-9][a-z0-9_-]{0,63})/(bundle|queues)', path)
         if match:
             venue_id, resource = match.groups()

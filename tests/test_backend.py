@@ -29,6 +29,30 @@ class ValidationTests(unittest.TestCase):
     def setUp(self):
         self.assertIsNotNone(server, 'backend/server.py must implement the requested service')
 
+    def test_accepts_location_with_explicit_simulated_indoor_status(self):
+        b = fixture()
+        b['venue']['indoorStatus'] = 'demo_simulated'
+        b['venue']['location'] = {'crs': 'WGS84', 'lat': 30.3018106, 'lon': 120.1028555, 'address': '丰潭路380号', 'mapUrl': 'https://www.openstreetmap.org/?mlat=30.3018106&mlon=120.1028555', 'dataStatus': 'outdoor_anchor_real_osm', 'distanceStraightM': 1551, 'anchorId': 'MALL-YINTAI'}
+        saved = server.validate_bundle(b)
+        self.assertEqual(saved['venue']['location']['crs'], 'WGS84')
+
+    def test_rejects_invalid_location_and_unlabelled_indoor_geometry(self):
+        b = fixture(); b['venue']['indoorStatus'] = 'demo_simulated'
+        b['venue']['location'] = {'crs': 'WGS84', 'lat': 30, 'lon': 120, 'address': '示例', 'mapUrl': 'https://www.openstreetmap.org/', 'dataStatus': 'outdoor_anchor_real_osm', 'distanceStraightM': 1551, 'anchorId': 'MALL-YINTAI'}
+        mutations = [lambda b: b['venue']['location'].update(dataStatus={}), lambda b: b['venue']['location'].update(mapUrl='https://[broken'), lambda b: b['venue']['location'].update(lat=91), lambda b: b['venue']['location'].update(lon=True), lambda b: b['venue']['location'].update(mapUrl='javascript:alert(1)'), lambda b: b['venue']['location'].update(crs='GCJ02'), lambda b: b['venue'].pop('indoorStatus')]
+        for mutate in mutations:
+            bad = copy.deepcopy(b); mutate(bad)
+            with self.assertRaises(server.ValidationError): server.validate_bundle(bad)
+
+    def test_nearby_catalog_preserves_anchor_status_and_recomputes_distance(self):
+        origin = {'id': 'ZJU-ZJG', 'name': '紫金港', 'lat': 30.3061419, 'lon': 120.0875012}
+        venue = {'id': 'MALL-YINTAI', 'name': '城西银泰', 'category': 'mall', 'address': '丰潭路380号', 'lat': 30.3018106, 'lon': 120.1028555, 'data_status': 'outdoor_anchor_real_osm', 'map_url': 'https://www.openstreetmap.org/', 'distance_straight_m': 0}
+        data = server.validate_nearby({'schemaVersion': 1, 'crs': 'WGS84', 'origin': origin, 'venues': [venue]})
+        self.assertAlmostEqual(data['venues'][0]['distance_straight_m'], 1551, delta=3)
+        self.assertEqual(data['venues'][0]['data_status'], 'outdoor_anchor_real_osm')
+        venue['map_url'] = 'data:text/html,<script>'
+        with self.assertRaises(server.ValidationError): server.validate_nearby({'schemaVersion': 1, 'crs': 'WGS84', 'origin': origin, 'venues': [venue]})
+
     def test_accepts_complete_bundle(self):
         self.assertEqual(server.validate_bundle(fixture())['venue']['id'], 'test-hospital')
 
@@ -91,6 +115,22 @@ class ServiceTests(unittest.TestCase):
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True); self.thread.start()
         self.url = 'http://127.0.0.1:' + str(self.httpd.server_port)
 
+    def test_nearby_catalog_endpoint_and_located_mall_import(self):
+        source = SERVER.parent.parent / 'data'
+        context = self.root / 'data' / 'context'; context.mkdir()
+        (context / 'nearby-venues.json').write_bytes((source / 'context' / 'nearby-venues.json').read_bytes())
+        status, data = self.request('/api/v1/nearby-venues')
+        self.assertEqual(status, 200); self.assertEqual(len(data['venues']), 6)
+        mall = json.loads((source / 'yintai-demo.json').read_text())
+        status, _ = self.request('/api/v1/imports', 'POST', mall)
+        self.assertEqual(status, 201)
+        status, saved = self.request('/api/v1/venues/yintai-demo/bundle')
+        self.assertEqual(saved['venue']['location'], mall['venue']['location'])
+        self.assertEqual(saved['venue']['indoorStatus'], 'demo_simulated')
+        (context / 'nearby-venues.json').write_text('{}')
+        status, _ = self.request('/api/v1/nearby-venues')
+        self.assertEqual(status, 422)
+
     def tearDown(self):
         if hasattr(self, 'httpd'):
             self.httpd.shutdown(); self.httpd.server_close(); self.thread.join(); self.tmp.cleanup()
@@ -105,6 +145,12 @@ class ServiceTests(unittest.TestCase):
         with response:
             data = response.read()
             return response.status, json.loads(data) if 'application/json' in response.headers.get('Content-Type', '') else data.decode()
+
+    def test_nearby_api_is_empty_when_optional_catalog_is_absent(self):
+        status, body = self.request('/api/v1/nearby-venues')
+        self.assertEqual(status, 200)
+        self.assertEqual(body['venues'], [])
+        self.assertIsNone(body['origin'])
 
     def test_health_seed_static_and_missing(self):
         self.assertEqual(self.request('/api/v1/health')[0], 200)

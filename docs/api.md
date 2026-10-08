@@ -1,6 +1,6 @@
 # 楼里本地数据接口与导入格式
 
-这是本机展示服务，使用 Python 3.9+ 标准库 HTTP 服务与 SQLite，无需安装第三方依赖。接口和页面同源，默认仅绑定 `127.0.0.1:8791`；没有公网产品所需的账号、权限、审计、并发编辑冲突或多用户隔离机制。演示种子来自 `data/hosp.json` 和 `data/mall.json`，全部为模拟内容。真实 HTTP 接口、真实本地数据库持久化，不代表已接入医院、商场或排队业务系统。
+这是本机展示服务，使用 Python 3.9+ 标准库 HTTP 服务与 SQLite，无需安装第三方依赖。接口和页面同源，默认仅绑定 `127.0.0.1:8791`；没有公网产品所需的账号、权限、审计、并发编辑冲突或多用户隔离机制。演示种子包含医院、商场及两个附近商场展示包；室内图、商户与队列为模拟内容，附近商场的地址与室外锚点来自用户提供资料。真实 HTTP 接口、真实本地数据库持久化，不代表已接入医院、商场或排队业务系统。
 
 ## 启动与数据位置
 
@@ -25,6 +25,7 @@ python3 backend/server.py --port 8791 --db backend/runtime/demo.sqlite --data-di
 | 方法 | 路径 | 结果 |
 | --- | --- | --- |
 | GET | `/api/v1/health` | `200 {"status":"ok","apiVersion":1,"storage":"sqlite","localOnly":true}` |
+| GET | `/api/v1/nearby-venues` | `200` 附近场馆目录，包含来源状态及重新计算的直线距离 |
 | GET | `/api/v1/venues` | `200 {"venues":[{"id","name","type","source"}]}`，按 id 排序 |
 | GET | `/api/v1/venues/{id}/bundle` | `200` 完整场馆包，含当前队列 |
 | GET | `/api/v1/venues/{id}/queues` | `200 {"queues":[...]}` |
@@ -69,7 +70,7 @@ curl -X POST http://127.0.0.1:8791/api/v1/imports \
   -H 'Content-Type: application/json' --data-binary @my-venue.json
 ```
 
-恢复演示种子（删除所有导入和修改）：
+恢复演示种子（覆盖种子场馆，保留其他导入场馆）：
 
 ```sh
 curl -X POST http://127.0.0.1:8791/api/v1/reset \
@@ -190,3 +191,13 @@ python3 -m unittest discover -s tests -v
 ```
 
 测试先确认缺失服务的失败，再实现；覆盖导入/覆盖、UTF-8、API 读取、队列持久化与事务、失败 reset 保留数据、请求大小、路径及符号链接逃逸、边界入口、原始小数门点和 flow 兼容。所有测试使用临时 SQLite、临时种子、临时页面与随机本机端口，不改实际演示数据。
+
+## 附近场馆目录与地点元数据
+
+`GET /api/v1/nearby-venues` 读取 `data/context/nearby-venues.json`，不加入 SQLite 场馆种子。目录缺失返回空列表；无效目录返回422。结构示例见该文件：schemaVersion为1，crs为WGS84，origin包含id/name/lat/lon，venues包含id/name/category/address/lat/lon/data_status/map_url。可选source_url、distance_straight_m。距离由后端按球面直线距离重新计算并排序，不作为步行路线。静态前端副本在frontend/data/nearby-venues.json；修改目录时需同时更新离线副本。
+
+场馆包的venue允许location和indoorStatus。location必须完整包含crs(WGS84)、lat、lon、address、mapUrl(HTTPS OpenStreetMap链接)、dataStatus、distanceStraightM、anchorId。经纬度是室外信息，与map内的栅格坐标分开保存。indoorStatus可为demo_simulated或user_provided；存在location时必须显式填写。source描述室内数据来源，含真实室外信息的模拟包仍使用synthetic。
+
+锚点状态：outdoor_anchor_real_osm是室外地点；hospital_polygon_real_osm是院区参考点；nearby_entrance_poi_real_osm是入口或公交站附近参考点；official_address_campus_anchor_osm仅是官方地址对应校园范围参考点，不能当作医院建筑入口。原始状态由提供资料保留，并非本项目新做的测绘认证。
+
+两个完整实例是data/yintai-demo.json和data/xixi-demo.json，可通过已有POST imports导入；地点元数据随包存入SQLite，接口校验异常不写入。室内地图仍按前述单层格式整理。硬件登记、设备遥测、定位服务和实际商户叫号接口仍未实现。

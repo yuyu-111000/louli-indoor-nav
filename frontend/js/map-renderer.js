@@ -6,7 +6,7 @@ function readTheme(){const cs=getComputedStyle(document.documentElement);
   .forEach(k=>T[k]=cs.getPropertyValue('--'+k).trim());}
 function resize(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const r=chart.getBoundingClientRect();chart.width=r.width*dpr;chart.height=r.height*dpr;}
 const isMob=()=>innerWidth<=760;
-function mapArea(){const W=cv.clientWidth,H=cv.clientHeight;if(window.LouliSession.embed)return {l:28,r:W-28,t:100,b:H-74};return isMob()?{l:10,r:W-10,t:200,b:H*.54-6}:{l:404,r:W>1200?W-366:W-70,t:20,b:H-20};}
+function mapArea(){const W=cv.clientWidth,H=cv.clientHeight;if(window.LouliSession.embed)return {l:28,r:W-28,t:window.LouliSession.bundle.venue.location?145:100,b:H-74};return isMob()?{l:10,r:W-10,t:200,b:H*.54-6}:{l:404,r:W>1200?W-366:W-70,t:20,b:H-20};}
 function fit(){const a=mapArea();let s=Math.min((a.r-a.l)/BW,(a.b-a.t)/BH);if(isMob()&&!window.LouliSession.embed)s=Math.max(s,4.2);view.s=s;
   const cx=isMob()&&!window.LouliSession.embed?BW/2:BW/2,cy=isMob()&&!window.LouliSession.embed?BH*.74:BH/2;view.ox=(a.l+a.r)/2-cx*s;view.oy=(a.t+a.b)/2-cy*s;}
 function zoomAt(px,py,ns){ns=clamp(ns,1.5,40);const wx=(px-view.ox)/view.s,wy=(py-view.oy)/view.s;view.s=ns;view.ox=px-wx*ns;view.oy=py-wy*ns;}

@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "venue": {
+    "id": "xixi-demo",
+    "name": "西溪印象城",
+    "type": "mall",
+    "source": "synthetic",
+    "indoorStatus": "demo_simulated",
+    "description": "真实室外锚点与用户提供地址；室内平面、商户、定位和队列均为示意，非该场馆实际楼层图。",
+    "location": {
+      "crs": "WGS84",
+      "lat": 30.2494914,
+      "lon": 120.0445823,
+      "address": "访溪路，荆丰村，五常街道，余杭区，杭州 310023",
+      "mapUrl": "https://www.openstreetmap.org/?mlat=30.2494914&mlon=120.0445823#map=18/30.24949/120.04458",
+      "dataStatus": "outdoor_anchor_real_osm",
+      "distanceStraightM": 7527.7,
+      "anchorId": "MALL-XIXI"
+    }
+  },
+  "map": {
+    "width": 100,
+    "height": 64,
+    "resolution": 0.5,
+    "start": {
+      "x": 50,
+      "y": 60
+    },
+    "corridors": [
+      [
+        0,
+        22,
+        100,
+        30
+      ],
+      [
+        0,
+        38,
+        100,
+        46
+      ],
+      [
+        46,
+        0,
+        54,
+        64
+      ],
+      [
+        0,
+        22,
+        8,
+        46
+      ],
+      [
+        92,
+        22,
+        100,
+        46
+      ]
+    ],
+    "rooms": [
+      {
+        "id": "service-demo",
+        "x0": 10,
+        "y0": 2,
+        "x1": 32,
+        "y1": 22,
+        "dx": 21,
+        "dy": 22,
+        "ix": 0,
+        "iy": 1
+      },
+      {
+        "id": "cafe-demo",
+        "x0": 34,
+        "y0": 2,
+        "x1": 46,
+        "y1": 22,
+        "dx": 40,
+        "dy": 22,
+        "ix": 0,
+        "iy": 1
+      },
+      {
+        "id": "food-demo",
+        "x0": 56,
+        "y0": 2,
+        "x1": 90,
+        "y1": 22,
+        "dx": 72,
+        "dy": 22,
+        "ix": 0,
+        "iy": 1
+      },
+      {
+        "id": "store-demo",
+        "x0": 10,
+        "y0": 46,
+        "x1": 32,
+        "y1": 62,
+        "dx": 21,
+        "dy": 46,
+        "ix": 0,
+        "iy": -1
+      },
+      {
+        "id": "rest-demo",
+        "x0": 34,
+        "y0": 46,
+        "x1": 46,
+        "y1": 62,
+        "dx": 40,
+        "dy": 46,
+        "ix": 0,
+        "iy": -1
+      },
+      {
+        "id": "lift-demo",
+        "x0": 56,
+        "y0": 46,
+        "x1": 90,
+        "y1": 62,
+        "dx": 72,
+        "dy": 46,
+        "ix": 0,
+        "iy": -1
+      }
+    ],
+    "fountain": {
+      "x": 50,
+      "y": 34,
+      "r": 0
+    },
+    "escalator": [
+      94,
+      2,
+      98,
+      8
+    ],
+    "entrances": [
+      {
+        "x": 50,
+        "y": 64,
+        "t": "模拟入口",
+        "a": "up"
+      }
+    ]
+  },
+  "catalog": {
+    "title": "西溪印象城 · 接入演示",
+    "sub": "室内示意 · 待官方楼层图",
+    "unit": "个地点",
+    "cats": {
+      "svc": [
+        "服务",
+        "服",
+        4
+      ],
+      "food": [
+        "餐饮",
+        "餐",
+        1
+      ],
+      "shop": [
+        "零售",
+        "店",
+        3
+      ],
+      "fac": [
+        "设施",
+        "设",
+        6
+      ]
+    },
+    "chips": [
+      [
+        "all",
+        "全部示例"
+      ],
+      [
+        "svc",
+        "服务"
+      ],
+      [
+        "food",
+        "餐饮"
+      ],
+      [
+        "shop",
+        "零售"
+      ],
+      [
+        "fac",
+        "设施"
+      ]
+    ],
+    "favs": [
+      "service-demo",
+      "food-demo",
+      "store-demo"
+    ],
+    "sample": {
+      "poi": "food-demo",
+      "num": "DEMO 008"
+    },
+    "poi": {
+      "service-demo": {
+        "n": "示例服务台",
+        "s": "演示点位 · 待确认真实位置",
+        "c": "svc"
+      },
+      "cafe-demo": {
+        "n": "示例咖啡店",
+        "s": "演示商户 · 非真实门店",
+        "c": "food",
+        "q": [
+          3,
+          2,
+          "单"
+        ]
+      },
+      "food-demo": {
+        "n": "示例餐厅",
+        "s": "演示商户 · 非真实门店",
+        "c": "food",
+        "q": [
+          8,
+          4,
+          "桌"
+        ]
+      },
+      "store-demo": {
+        "n": "示例零售店",
+        "s": "演示商户 · 非真实门店",
+        "c": "shop"
+      },
+      "rest-demo": {
+        "n": "示例休息区",
+        "s": "演示设施 · 待确认真实位置",
+        "c": "fac"
+      },
+      "lift-demo": {
+        "n": "示例电梯厅",
+        "s": "演示设施 · 不支持跨层导航",
+        "c": "fac"
+      }
+    }
+  },
+  "queues": [
+    {
+      "poiId": "food-demo",
+      "ahead": 8,
+      "minutesPerPerson": 4,
+      "unit": "桌"
+    },
+    {
+      "poiId": "cafe-demo",
+      "ahead": 3,
+      "minutesPerPerson": 2,
+      "unit": "单"
+    }
+  ]
+}

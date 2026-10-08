@@ -1,5 +1,5 @@
 // The simulation scripts share a page scope; only this small facade is public.
-const sourceLabel=window.LouliSession.bundle.venue.source==='synthetic'?'虚构场馆':'用户提供的场馆数据';
+const sourceLabel=window.LouliSession.bundle.venue.location?'真实室外地点 · 室内示意图':window.LouliSession.bundle.venue.source==='synthetic'?'虚构场馆':'用户提供的场馆数据';
 const mapStatus=document.createElement('div');mapStatus.className='map-status';
 mapStatus.textContent=`仿真位置 · ${sourceLabel} · ${window.LouliSession.connected?'接口已连接':'本地演示数据'}`;
 document.querySelector('#app').append(mapStatus);
@@ -45,5 +45,6 @@ window.LouliDemo={
   setConnection(connected){window.LouliSession.connected=connected;mapStatus.textContent=`仿真位置 · ${sourceLabel} · ${connected?'接口已连接':'接口暂不可用，保留最近数据'}`;},
   snapshot(){return {time:sim.t,position:{...disp},truth:{...sim.truth},navigation:nav.active,destination:nav.legs[nav.i],venue:window.LouliSession.bundle.venue.id,queues:Q};}
 };
+if(window.LouliSession.bundle.venue.location){const floor=document.querySelector('.floor');if(floor){floor.textContent='示意';floor.setAttribute('aria-label','示意楼层，非真实楼层图');}}
 window.LouliDemo.reset();
 window.dispatchEvent(new Event('louli-ready'));

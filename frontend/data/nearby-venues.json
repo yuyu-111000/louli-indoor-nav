@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "crs": "WGS84",
+  "origin": {
+    "id": "ZJU-ZJG",
+    "name": "浙江大学紫金港校区",
+    "lat": 30.3061419,
+    "lon": 120.0875012
+  },
+  "venues": [
+    {
+      "id": "HOSP-ZDE2-ZJU",
+      "name": "浙大二院浙大院区",
+      "category": "hospital",
+      "address": "浙江省杭州市西湖区余杭塘路866号，浙江大学紫金港校区内（310058）",
+      "lat": 30.3061419,
+      "lon": 120.0875012,
+      "data_status": "official_address_campus_anchor_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.3061419&mlon=120.0875012#map=17/30.30614/120.08750",
+      "source_url": "https://www.z2hospital.com/",
+      "distance_straight_m": 0.0
+    },
+    {
+      "id": "MALL-YINTAI",
+      "name": "杭州城西银泰城",
+      "category": "mall",
+      "address": "丰潭路380号，祥符街道，拱墅区，杭州 310011",
+      "lat": 30.3018106,
+      "lon": 120.1028555,
+      "data_status": "outdoor_anchor_real_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.3018106&mlon=120.1028555#map=18/30.30181/120.10286",
+      "distance_straight_m": 1550.7
+    },
+    {
+      "id": "MALL-XIXI",
+      "name": "西溪印象城",
+      "category": "mall",
+      "address": "访溪路，荆丰村，五常街道，余杭区，杭州 310023",
+      "lat": 30.2494914,
+      "lon": 120.0445823,
+      "data_status": "outdoor_anchor_real_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.2494914&mlon=120.0445823#map=18/30.24949/120.04458",
+      "distance_straight_m": 7527.7
+    },
+    {
+      "id": "HOSP-ZDE2-CITYEAST",
+      "name": "浙大二院城东院区",
+      "category": "hospital",
+      "address": "源聚路，白石庙，笕桥街道，上城区，杭州 310017",
+      "lat": 30.3007556,
+      "lon": 120.2235484,
+      "data_status": "nearby_entrance_poi_real_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.3007556&mlon=120.2235484#map=18/30.30076/120.22355",
+      "distance_straight_m": 13074.5
+    },
+    {
+      "id": "HOSP-ZDE2-BINJIANG",
+      "name": "浙大二院滨江院区",
+      "category": "hospital",
+      "address": "江虹路，中兴社区，长河街道，滨江区，杭州 310052",
+      "lat": 30.2050252,
+      "lon": 120.1954991,
+      "data_status": "nearby_entrance_poi_real_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.2050252&mlon=120.1954991#map=18/30.20503/120.19550",
+      "distance_straight_m": 15297.7
+    },
+    {
+      "id": "HOSP-ZDE2-BOAO",
+      "name": "浙大二院博奥院区",
+      "category": "hospital",
+      "address": "启迪路，信息港社区，北干街道，萧山区，杭州 310052",
+      "lat": 30.2055832,
+      "lon": 120.2402873,
+      "data_status": "hospital_polygon_real_osm",
+      "map_url": "https://www.openstreetmap.org/?mlat=30.2055832&mlon=120.2402873#map=18/30.20558/120.24029",
+      "distance_straight_m": 18449.4
+    }
+  ]
+}
