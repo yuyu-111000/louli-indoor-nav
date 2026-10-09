@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {floorById,filterShops,polygonPoints} from './spatial-data.mjs';
+import {floorById,filterShops,polygonPoints,visibleSideFaces} from './spatial-data.mjs';
 
 const data=JSON.parse(readFileSync(new URL('../data/yintai-kiosk/kiosk-map.json',import.meta.url)));
 
@@ -27,4 +27,12 @@ test('floor selection and cross-floor search retain photo-derived uncertainty',(
   assert.equal(floorById(data,'3F').shops.find(s=>s.name==='博纳影院')?.confidence,'clear');
   assert.equal(filterShops(data,'星巴克').length,3);
   assert.equal(filterShops(data,'不存在').length,0);
+});
+
+test('raised shop shapes expose only their near edge regardless of winding',()=>{
+  const clockwise=[[0,0],[0,20],[30,20],[30,0]];
+  const counterclockwise=[...clockwise].reverse();
+  const expected=[[0,20],[30,20],[30,28],[0,28]];
+  assert.deepEqual(visibleSideFaces(clockwise,8),[expected]);
+  assert.deepEqual(visibleSideFaces(counterclockwise,8),[[[30,20],[0,20],[0,28],[30,28]]]);
 });

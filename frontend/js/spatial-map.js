@@ -1,19 +1,27 @@
-import {floorById,filterShops,polygonPoints} from './spatial-data.mjs';
+import {floorById,filterShops,polygonPoints,visibleSideFaces} from './spatial-data.mjs';
 const $=s=>document.querySelector(s),svgNS='http://www.w3.org/2000/svg';
 const params=new URLSearchParams(location.search);
 if(params.get('embed')==='1')document.body.classList.add('embedded');
 let data,selectedFloor=null,selectedShop=null,sourcePhoto=false;
 const tones={rose:'#d97979',amber:'#deb582',yellow:'#edce55',green:'#9cc270',cyan:'#5dc5d3',blue:'#7c9ee4'};
 function svg(name,attributes={}){const el=document.createElementNS(svgNS,name);for(const [k,v] of Object.entries(attributes))el.setAttribute(k,String(v));return el;}
+function zoneTop(floor,zone,interactive){const polygon=svg('polygon',{points:polygonPoints(zone.shape),fill:tones[zone.tone]||tones.blue,class:'shop-zone',tabindex:interactive?'0':'-1','data-zone':zone.id});
+  if(interactive){polygon.setAttribute('role','button');polygon.setAttribute('aria-label',`${floor.id} 铺位色块，点击查看图上标注`);const choose=()=>selectZone(floor,zone);polygon.addEventListener('click',choose);polygon.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}});}return polygon;}
 function shapeLayer(floor,interactive=false){const graphic=svg('svg',{viewBox:'40 215 1520 880',preserveAspectRatio:'xMidYMid meet'});if(!interactive)graphic.setAttribute('aria-hidden','true');
-  const plate=svg('path',{d:'M80 420 Q170 290 470 275 L900 235 L1335 245 Q1490 260 1530 425 L1500 805 Q1380 1010 1210 1050 L900 850 L350 760 Z',class:'floor-plate'});graphic.append(plate);
-  for(const zone of floor.zones){const polygon=svg('polygon',{points:polygonPoints(zone.shape),fill:tones[zone.tone]||tones.blue,class:'shop-zone',tabindex:interactive?'0':'-1','data-zone':zone.id});
-    if(interactive){polygon.setAttribute('role','button');polygon.setAttribute('aria-label',`${floor.id} 铺位色块，点击查看图上标注`);const choose=()=>selectZone(floor,zone);polygon.addEventListener('click',choose);polygon.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}});}graphic.append(polygon);}
+  const outline='M80 420 Q170 290 470 275 L900 235 L1335 245 Q1490 260 1530 425 L1500 805 Q1380 1010 1210 1050 L900 850 L350 760 Z';
+  const depth=interactive?16:25;
+  graphic.append(svg('path',{d:outline,transform:`translate(0 ${depth})`,class:'floor-plate-edge'}));
+  graphic.append(svg('path',{d:outline,class:'floor-plate'}));
+  for(const zone of floor.zones){const volume=svg('g',{class:'shop-volume'}),fill=tones[zone.tone]||tones.blue;
+    volume.append(svg('polygon',{points:polygonPoints(zone.shape),transform:`translate(5 ${depth+7})`,class:'shop-ground-shadow'}));
+    for(const face of visibleSideFaces(zone.shape,depth))volume.append(svg('polygon',{points:polygonPoints(face),fill,class:'shop-side'}));
+    volume.append(zoneTop(floor,zone,interactive));graphic.append(volume);}
   return graphic;}
 function renderStack(){const host=$('#stackLayers');host.replaceChildren();const reverse=[...data.floors].reverse();reverse.forEach((floor,i)=>{const button=document.createElement('button');button.type='button';button.className='stack-layer';button.style.setProperty('--level',i);button.setAttribute('aria-label',`查看 ${floor.id} 楼层`);button.append(shapeLayer(floor));const tag=document.createElement('span');tag.className='layer-tag';tag.textContent=floor.id;button.append(tag);button.onclick=()=>selectFloor(floor.id);host.append(button);});}
 function renderPlan(){const floor=floorById(data,selectedFloor);if(!floor)return;$('#planFloor').textContent=floor.id;$('#planCount').textContent=`${floor.zones.length} 个色块区域 · ${floor.shops.length} 个可读店名`;
   const canvas=$('#planSvg');canvas.replaceChildren();if(sourcePhoto){const photo=svg('image',{href:floor.photo,x:0,y:0,width:1706,height:1279,preserveAspectRatio:'none'});canvas.append(photo);}
-  const layer=shapeLayer(floor,true);for(const child of [...layer.children]){if(sourcePhoto){if(child.classList.contains('shop-zone')){child.classList.add('photo-outline');canvas.append(child);}}else canvas.append(child);}
+  if(sourcePhoto){for(const zone of floor.zones){const outline=zoneTop(floor,zone,true);outline.classList.add('photo-outline');canvas.append(outline);}}
+  else{const layer=shapeLayer(floor,true);canvas.append(...[...layer.children]);}
   if(!sourcePhoto){for(const shop of floor.shops){const label=svg('g',{class:'shop-label'+(selectedShop?.id===shop.id?' picked':''),tabindex:'0',role:'button','aria-label':`${shop.name}，${floor.id}${shop.confidence==='review'?'，名称待核实':''}`});const chip=svg('circle',{cx:shop.x,cy:shop.y,r:19});const text=svg('text',{x:shop.x,y:shop.y+37,'text-anchor':'middle'});text.textContent=shop.name.length>10?shop.name.slice(0,9)+'…':shop.name;label.append(chip,text);const choose=()=>selectShop(shop,floor.id);label.addEventListener('click',choose);label.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}});canvas.append(label);}}
 }
 function updateMode(){const inPlan=!!selectedFloor;$('#stackView').hidden=inPlan;$('#planView').hidden=!inPlan;$('#overviewBtn').classList.toggle('active',!inPlan);$('#overviewBtn').setAttribute('aria-pressed',String(!inPlan));$('#photoBtn').disabled=!inPlan;$('#photoBtn').classList.toggle('active',sourcePhoto&&inPlan);$('#photoBtn').setAttribute('aria-pressed',String(sourcePhoto&&inPlan));document.querySelectorAll('[data-floor]').forEach(b=>b.classList.toggle('active',b.dataset.floor===selectedFloor));if(inPlan)renderPlan();}
