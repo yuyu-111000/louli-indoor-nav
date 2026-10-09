@@ -1,24 +1,23 @@
 # 楼里 · 产品展示与数据接口
 
-医院与商场各有四段展示：任务清单、动态路线、模拟排队返回提醒、信标概念。首页适合给队友或合作方讲解；“自由体验”保留搜索、地点详情、多点规划和定位方法仿真；“演示数据”支持导入、下载场馆包与修改模拟队列。
+医院与商场各有四段展示。城西银泰默认先显示百度地图公开 F1 截图与可点选商户；下一章节进入原有仿真路线、模拟排队返回提醒和信标概念。西溪印象城也能逐层查看公开截图。首页适合给队友或合作方讲解；“自由体验”保留搜索、地点详情、多点规划和定位方法仿真；“演示数据”支持导入、下载场馆包与修改模拟队列。
 
 ## 附近场馆展示
 
-默认展示 **杭州城西银泰城**，用户提供的室外锚点距紫金港约1.55公里（直线），是两家商场中较近的一家。“附近场馆”收录两家商场和四个医院院区，可切换西溪印象城；医院目前仅展示地点资料。
+默认展示 **杭州城西银泰城**，用户提供的室外锚点距紫金港约1.55公里（直线），是两家商场中较近的一家。商场第一章使用用户提供的百度地图 F1 截图；“逐层看图”可以切换 19 个地图选层视图、57 张图片并搜索图上标注。“附近场馆”收录两家商场和四个医院院区，可切换西溪印象城；医院目前仅展示地点资料。
 
-真实地址和室外坐标来自用户提供的地图研究资料，未重新实地核验。**附件不含实际楼层图**；两家商场的室内几何、设施、商铺、位置与队列均为示意。地图尺度和路线距离是仿真数值，不是实际场馆测量。完整说明见 [附近场馆接入](docs/nearby-venues.md)。
+真实地址和室外坐标来自用户提供的地图研究资料，未重新实地核验。公开截图中 F1 可见部分真实商户文字，但并非场馆官方完整平面图；上层多为轮廓或停车内容。图上标注位置不是店门或通道坐标。路线章节的室内几何、设施、店铺与队列仍为仿真，地图尺度和路线距离不是实际场馆测量。完整说明见 [附近场馆接入](docs/nearby-venues.md)。
 
 ## 展示材料
 
-- [城西银泰四章节演示 GIF](materials/media/yintai-demo.gif)、[展示截图](materials/media/yintai-showcase.png)
-
-
+- [城西银泰公开楼层展示 GIF](materials/media/yintai-public-floor.gif)、[F1 展示截图](materials/media/yintai-public-floor.png)、[商户点选截图](materials/media/yintai-public-selected.png)、[F2 覆盖情况截图](materials/media/yintai-f2-coverage.png)
+- [原仿真四章节 GIF](materials/media/yintai-demo.gif)：这是公开楼层截图接入前的录屏，仅作历史演示参考。
 - [医院功能 GIF](materials/media/hospital-demo.gif) / [商场功能 GIF](materials/media/mall-demo.gif)
 - [硬件设计 PDF](materials/hardware/hardware-design.pdf)、[BOM](materials/hardware/BOM.csv)、[概念图](materials/hardware/concept.png)、[爆炸图](materials/hardware/exploded.png)
 - [简版商业计划 PDF](materials/business/louli-business-plan.pdf)、[商业调研与访谈 PDF](materials/business/louli-commercial-research.pdf)
 - PDF旁附可编辑LaTeX源稿。早期概念讨论稿在 `materials/archive/`，本轮状态以本README和验收记录为准。
 
-![医院功能演示](materials/media/hospital-demo.gif)
+![城西银泰公开楼层展示](materials/media/yintai-public-floor.gif)
 
 原单文件演示保留在 [demo/index.html](demo/index.html)，旧商业报告在 [report/index.html](report/index.html)；原README保留为 [历史说明](docs/legacy-readme.md)，其中旧参数与测算不能视为当前实测或商业承诺。
 
@@ -38,7 +37,7 @@ python3 backend/server.py
 
 1. 选“医院就诊”，说明患者从目的地查找走向任务流程导航；点击“播放功能演示”。每段约12秒，也可“下一步”或点进度条跳转。
 2. 在路线章节说明地标指引；在候诊章节说明返回提醒。所有位置、号码与队列都是演示数据，未连接业务系统。
-3. 切到“商场展示”，展示多点清单与路线。自由体验内可搜索、选择地点与规划访问顺序。
+3. 切到“商场展示”，先用公开 F1 图展示可点选商户和逐层视图，再进下一章展示仿真多点路线。页头“逐层看图”进入独立查看页。
 4. 打开“合作资料”，讨论一层地图、一个流程、一个业务负责人的小范围试点。先确认对方的问题与资源，再谈正式报价。
 
 演示的排队章节会把对应地点队列写成1，以说明接口变化；“重新开始”或切换场景会恢复进入该场馆时的队列。直接关闭页面后，可在数据页恢复种子。模拟号码只存在当前页面，没有真实预约或叫号效力。
@@ -61,10 +60,10 @@ python3 backend/server.py
 
 ```sh
 python3 -m unittest discover -s tests -v
-node --test frontend/js/core.test.mjs
+node --test frontend/js/*.test.mjs
 ```
 
-后端20项、前端10项测试通过。浏览器验证了医院/商场播放、暂停、重置、章节、动态路线、资料弹窗、60×40米新地图导入与导航；390px手机页面无横向溢出。见 [验收记录](docs/acceptance.md)。
+后端20项、前端13项测试通过。浏览器验证了医院/商场播放、暂停、重置、章节、动态路线、资料弹窗、60×40米新地图导入与导航；本轮又检查了公开 F1 图、商户点选、F2 覆盖提示和西溪印象城切换。见 [验收记录](docs/acceptance.md)。
 
 ## 来源与交付边界
 

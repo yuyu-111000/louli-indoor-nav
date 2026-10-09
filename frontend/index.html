@@ -16,11 +16,11 @@
   </aside>
   <section class="map-stage" aria-label="地图功能演示">
     <div class="stage-heading"><div><small id="venueType">就诊导航</small><h2 id="venueName">示例门诊楼</h2></div><span id="apiStatus">连接数据中</span></div>
-    <div id="placeSummary" class="place-summary" hidden><span id="placeSummaryText"></span><a id="placeMapLink" target="_blank" rel="noopener noreferrer">查看室外地点 ↗</a></div><iframe id="demoFrame" title="室内地图与导航演示"></iframe>
+    <div id="placeSummary" class="place-summary" hidden><span id="placeSummaryText"></span><a id="placeMapLink" target="_blank" rel="noopener noreferrer">查看室外地点 ↗</a></div><iframe id="referenceFrame" title="公开楼层图与图上店铺标注" hidden></iframe><iframe id="demoFrame" title="室内地图与导航仿真演示"></iframe>
     <div class="hardware-overlay" id="hardwareOverlay" hidden><img src="assets/hardware-concept.png" alt="楼里信标概念外观"><div><small>硬件概念</small><h3>场馆内的位置参考点</h3><p>部署在入口、路口与服务点附近。<br>首轮用现成信标验证，再推进定制。</p></div></div>
     <div class="map-footer"><span id="floorNote">地图可拖动与缩放</span><span id="demoFeature">流程导航 / 地标指引 / 返回提醒</span></div>
   </section>
 </main>
 <dialog id="materials"><div class="dialog-head"><h2>合作资料</h2><button id="closeMaterials" aria-label="关闭">×</button></div><p>用产品体验开始讨论，从一个楼层验证合作价值。</p><a href="materials/hardware-design.pdf" target="_blank">硬件设计与原型路线 <span>PDF ↗</span></a><a href="materials/business-plan.pdf" target="_blank">产品与试点合作计划 <span>PDF ↗</span></a><a href="materials/commercial-research.pdf" target="_blank">商业调研与客户访谈 <span>PDF ↗</span></a><a href="materials/bom.csv" download>硬件 BOM <span>CSV ↓</span></a><a href="data-console.html">地图与演示数据导入 <span>打开 ↗</span></a><div class="pilot"><b>首轮合作建议</b><p>选一个楼层、一段就诊或逛店流程，确认地图、业务对接人和测试范围，再形成具体试点方案。</p></div></dialog>
-<dialog id="nearbyDialog" class="nearby-dialog"><div class="dialog-head"><h2>紫金港附近场馆</h2><button id="closeNearby" aria-label="关闭附近场馆">×</button></div><p>地址与室外锚点来自你提供的公开地图资料。距离为校园锚点到场馆的直线距离，不是出行路线。</p><div id="nearbyList"></div><p class="attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · 用户提供资料，2026-10-08<br>两家商场的室内布局、设施与商户为示意；医院仅接入地点资料。</p></dialog><script type="module" src="js/showcase.js"></script>
+<dialog id="nearbyDialog" class="nearby-dialog"><div class="dialog-head"><h2>紫金港附近场馆</h2><button id="closeNearby" aria-label="关闭附近场馆">×</button></div><p>地址与室外锚点来自你提供的公开地图资料。距离为校园锚点到场馆的直线距离，不是出行路线。</p><div id="nearbyList"></div><p class="attribution">室外地点：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>。商场楼层参考图：百度地图公开视图，2026-10-09 截图；并非场馆官方平面图。图上商户待核实，路线和队列仍为仿真；医院仅接入地点资料。</p></dialog><script type="module" src="js/showcase.js"></script>
 </body></html>
