@@ -1,0 +1,55 @@
+@charset "UTF-8";
+
+/* A self-hosted CJK UI face keeps the Claude-inspired sans style portable. */
+@font-face {
+  font-family: "Louli UI Sans";
+  src: url("../assets/fonts/louli-ui-sans.woff") format("woff");
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "Anthropic Sans", "Louli UI Sans", "Segoe UI", "PingFang SC",
+    "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-ui);
+  font-kerning: normal;
+}
+
+/* Keep the existing display headings and logo. */
+.brand,
+.story-panel h1,
+.stage-heading h2,
+.dialog-head h2,
+.hardware-overlay h3 {
+  font-family: var(--font-display);
+}
+
+.site-header nav {
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.story-copy h2 {
+  font-weight: 600;
+}
+
+.story-copy p {
+  font-weight: 400;
+}
+
+.reference-controls label {
+  font-weight: 500;
+}
+
+.reference-controls select,
+.reference-controls input,
+.coverage,
+.reference-footer {
+  font-weight: 400;
+}
+
+.selection b {
+  font-weight: 600;
+}

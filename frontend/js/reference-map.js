@@ -1,6 +1,8 @@
 import {getVenue,getFloor,defaultAsset,markersForAsset,searchFloor} from './reference-map-data.mjs';
 const $=selector=>document.querySelector(selector);
 const query=new URLSearchParams(location.search);
+const showcaseVenue=query.get('venue')==='xixi-demo'?'xixi-demo':'yintai-demo';
+$('#backToShowcase').href=`./?venue=${showcaseVenue}`;
 if(query.get('embed')==='1')document.body.classList.add('embedded');
 let venue,floor,asset,zoom=1,selected=null;
 const viewNames={overview:'总览',overview_A:'A区总览',detail_north:'北侧细节',detail_south:'南侧细节',detail_west:'西侧细节',detail_east:'东侧细节'};
