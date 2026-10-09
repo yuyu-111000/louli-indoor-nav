@@ -14,7 +14,7 @@ function paintChapter(){
   document.querySelectorAll('#progress button').forEach((b,i)=>{b.classList.toggle('active',i===chapter);b.setAttribute('aria-current',i===chapter?'step':'false');});
   const showPublic=hasPublicView&&chapter===0;referenceFrame.hidden=!showPublic;frame.hidden=showPublic;$('.map-stage').classList.toggle('public-map',showPublic);
   $('#hardwareOverlay').hidden=c.action!=='hardware';$('.map-stage').classList.toggle('navigating',c.action==='navigate');
-  if(hasPublicView){$('#venueType').textContent=showPublic?'公开楼层图 · 可切换楼层':'商场路线与排队 · 仿真';$('#sourceNote').textContent=showPublic?'百度地图公开截图 · 图上商户待核实':'模拟室内布局 · 模拟路线与队列';$('#floorNote').textContent=showPublic?'公开截图 · 不是场馆官方平面图':'仿真路线 · 非实际楼层图与距离';}
+  if(hasPublicView){$('#venueType').textContent=showPublic?(venueId==='yintai-demo'?'导览屏照片重绘 · 五层空间':'公开楼层图 · 可切换楼层'):'商场路线与排队 · 仿真';$('#sourceNote').textContent=showPublic?(venueId==='yintai-demo'?'导览屏照片提取 · 店名与轮廓待核实':'百度地图公开截图 · 图上商户待核实'):'模拟室内布局 · 模拟路线与队列';$('#floorNote').textContent=showPublic?'照片提取 · 不是实测导航图':'仿真路线 · 非实际楼层图与距离';}
   $('#demoFeature').textContent=['任务清单 / 多点规划','地标指引 / 路线重规划','模拟队列 / 返回提醒','信标部署 / 地图约束'][chapter];
 }
 async function selectChapter(index){
@@ -28,23 +28,23 @@ async function restoreQueues(){if(changedQueues){try{await writeQueues(bundle.ve
 async function load(){
   try{
     const session=await loadVenue(venueId);bundle=session.bundle;originalQueues=structuredClone(bundle.queues);chapters=buildStory(bundle);
-    if(hasPublicView){chapters[0].title='在公开楼层图上找店';chapters[0].caption='已接入 F1 公开地图截图，可点选图上商户；其它楼层的覆盖情况可逐层查看。路线与队列在后续章节仿真演示。';chapters[0].labels=publicViews[venueId];}
+    if(hasPublicView){chapters[0].title=venueId==='yintai-demo'?'一眼看见五层商场':'在公开楼层图上找店';chapters[0].caption=venueId==='yintai-demo'?'按导览屏照片重绘 B1 至 4F 店铺色块，点击楼层看相对位置与可读店名；路线与队列在后续章节仿真演示。':'已接入 F1 公开地图截图，可点选图上商户；其它楼层的覆盖情况可逐层查看。路线与队列在后续章节仿真演示。';chapters[0].labels=venueId==='yintai-demo'?['五层立体概览','点击楼层进入平面图','搜索图上店名']:publicViews[venueId];}
     $('#venueName').textContent=bundle.venue.name+(bundle.venue.location?' · 接入展示':'');$('#venueType').textContent=bundle.venue.type==='hospital'?'医院就诊流程':'商场路线规划';
     $('#apiStatus').textContent=session.connected?'数据接口已连接':'本地演示模式';
     $('#sourceNote').textContent=bundle.venue.location?'真实室外地点 · 室内示意图':`${bundle.venue.source==='synthetic'?'示例场馆':'用户提供地图'} · 仿真位置与流程`;
     $('#floorNote').textContent=bundle.venue.location?'室内示意 · 非实际楼层图与距离':'地图可拖动与缩放';
     if(bundle.venue.location){const loc=bundle.venue.location;$('#placeSummary').hidden=false;$('#placeSummaryText').textContent=`${loc.address} · 距紫金港约 ${(loc.distanceStraightM/1000).toFixed(2)} km（直线）`;$('#placeMapLink').href=loc.mapUrl;}
-    $('#exploreLink').href=hasPublicView?`reference-map.html?venue=${encodeURIComponent(venueId)}`:`demo.html?venue=${encodeURIComponent(venueId)}`;$('#exploreLink').textContent=hasPublicView?'逐层看图':'自由体验';
+    $('#exploreLink').href=venueId==='yintai-demo'?'spatial-map.html':hasPublicView?`reference-map.html?venue=${encodeURIComponent(venueId)}`:`demo.html?venue=${encodeURIComponent(venueId)}`;$('#exploreLink').textContent=hasPublicView?'逐层看图':'自由体验';
     document.querySelectorAll('[data-venue]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.venue===venueId||(b.dataset.venue==='mall'&&bundle.venue.type==='mall')));
     $('#progress').replaceChildren(...chapters.map((c,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',c.title);b.onclick=()=>{selectChapter(i);setPlaying(true);};return b;}));paintChapter();
     frame.onload=()=>{const finish=()=>{ready=true;$('#playBtn').disabled=false;$('#nextBtn').disabled=false;frame.contentWindow.LouliDemo.pause(true);selectChapter(0);};if(frame.contentWindow.LouliDemo)finish();else frame.contentWindow.addEventListener('louli-ready',finish,{once:true});};
-    if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&venue=${encodeURIComponent(venueId)}`;
+    if(hasPublicView)referenceFrame.src=venueId==='yintai-demo'?'spatial-map.html?embed=1':`reference-map.html?embed=1&venue=${encodeURIComponent(venueId)}`;
     frame.src=`demo.html?embed=1&venue=${encodeURIComponent(venueId)}`;
   }catch(error){$('#chapterTitle').textContent='场馆数据未能加载';$('#chapterCaption').textContent=error.message;$('#apiStatus').textContent='请检查数据服务';}
 }
 $('#playBtn').onclick=()=>{if(chapter===3&&!playing)selectChapter(0);setPlaying(!playing);};
 $('#nextBtn').onclick=()=>{selectChapter((chapter+1)%4);setPlaying(true);};
-$('#restartBtn').onclick=async()=>{if(!ready)return;setPlaying(false);await restoreQueues();frame.contentWindow.LouliDemo.reset();frame.contentWindow.LouliDemo.pause(true);if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&venue=${encodeURIComponent(venueId)}&floor=F1`;selectChapter(0);};
+$('#restartBtn').onclick=async()=>{if(!ready)return;setPlaying(false);await restoreQueues();frame.contentWindow.LouliDemo.reset();frame.contentWindow.LouliDemo.pause(true);if(hasPublicView)referenceFrame.src=venueId==='yintai-demo'?'spatial-map.html?embed=1':`reference-map.html?embed=1&venue=${encodeURIComponent(venueId)}&floor=F1`;selectChapter(0);};
 document.querySelectorAll('[data-venue]').forEach(b=>b.onclick=async()=>{await restoreQueues();location.href=`?venue=${b.dataset.venue==='mall'?'yintai-demo':b.dataset.venue}`;});
 setupNearby({currentId:venueId,beforeNavigate:restoreQueues});
 $('#materialsBtn').onclick=()=>$('#materials').showModal();$('#closeMaterials').onclick=()=>$('#materials').close();
