@@ -9,3 +9,8 @@
 
 .spatial-header .site-nav-slot{margin-left:auto}.spatial-header .louli-brand{flex-shrink:0}.single-floor-note{align-self:center;color:#668775;font-size:12px;margin-left:8px}.plan-view .plan-heading button{display:none}.spatial-app .plan-view svg{min-height:250px}
 @media(max-width:620px){.shop-label text{font-size:42px;stroke-width:8px}.shop-label circle{r:24;stroke-width:6px}}
+
+/* Embedded overview occupies the original map area. */
+.embedded .spatial-inspector,.embedded .stack-caption,.embedded .plan-heading p{display:none}
+.embedded .spatial-workspace{grid-template-columns:minmax(0,1fr)}
+.plan-view .plan-heading button{display:block}

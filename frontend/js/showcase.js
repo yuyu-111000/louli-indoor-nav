@@ -13,6 +13,7 @@ let bundle,guides=[],contentAnimation,chapters=[],chapter=0,playing=false,ready=
 let transitionTimer,transitioning=false,pressedChapter;
 const venueId=new URLSearchParams(location.search).get('venue')||'yintai-demo';
 const publicViews={'yintai-demo':['PANDORA','LEGO乐高','星巴克臻选'],'xixi-demo':['丝芙兰Sephora','优衣库','泡泡玛特POP MART']};
+const hasSpatialView=venueId==='yintai-demo';
 let hasPublicView=Object.hasOwn(publicViews,venueId);
 function setPlaying(value){playing=value;paintPlayback($('#playBtn'),value);frame.contentWindow.LouliDemo?.pause(!value);clearInterval(timer);if(value)timer=setInterval(()=>{if(chapter===3){setPlaying(false);return;}selectChapter(chapter+1);},12000);}
 function paintNavigation(){
@@ -32,7 +33,7 @@ function paintChapter(){
     button.querySelector('.step-number').hidden=state==='complete';
     button.querySelector('.step-check').hidden=state!=='complete';
   });
-  const showPublic=hasPublicView&&chapter===0;
+  const showPublic=(hasSpatialView||hasPublicView)&&chapter===0;
   for(const [map,visible] of [[referenceFrame,showPublic],[frame,!showPublic]]){
     map.classList.toggle('is-visible',visible);map.inert=!visible;map.setAttribute('aria-hidden',String(!visible));
   }
@@ -95,7 +96,7 @@ async function load(){
       name.textContent=choice.name;arrow.textContent='→';arrow.setAttribute('aria-hidden','true');label.append(input,name,arrow);return label;
     }));
     if(hasPublicView){chapters[0].title='在公开楼层图上找店';chapters[0].labels=publicViews[venueId];}
-    $('#venueName').textContent=bundle.venue.name+(bundle.map.trace?' · 1F':bundle.venue.location?' · 接入展示':'');$('#venueType').textContent=bundle.venue.type==='hospital'?'医院就诊流程':'商场路线规划';
+    $('#venueName').textContent=bundle.venue.name+(bundle.map.trace?(hasSpatialView?' · B1—4F':' · 1F'):bundle.venue.location?' · 接入展示':'');$('#venueType').textContent=bundle.venue.type==='hospital'?'医院就诊流程':'商场路线规划';
     $('#apiStatus').textContent=session.connected?'数据接口已连接':'本地演示模式';
     $('#floorNote').textContent=bundle.venue.location?'室内示意 · 非实际楼层图与距离':'地图可拖动与缩放';
     if(bundle.map.trace)$('#floorNote').textContent='1F · 导览照片轮廓 · 路线与候位演示';
@@ -110,7 +111,8 @@ async function load(){
       button.onclick=()=>{setPlaying(false);selectChapter(i);};return button;
     }));paintChapter();
     frame.onload=()=>{const finish=()=>{ready=true;$('#playBtn').disabled=false;$('#nextBtn').disabled=false;$('#restartBtn').disabled=false;$('#destinationChoices').querySelectorAll('input').forEach(input=>input.disabled=false);document.querySelectorAll('#progress button').forEach(button=>button.disabled=false);frame.contentWindow.LouliDemo.pause(true);selectChapter(0);};if(frame.contentWindow.LouliDemo)finish();else frame.contentWindow.addEventListener('louli-ready',finish,{once:true});};
-    if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&showcase=1&venue=${encodeURIComponent(venueId)}`;
+    if(hasSpatialView)referenceFrame.src='spatial-map.html?embed=1';
+    else if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&showcase=1&venue=${encodeURIComponent(venueId)}`;
     frame.src=`demo.html?embed=1&venue=${encodeURIComponent(venueId)}`;
   }catch(error){$('#chapterTitle').textContent=`场馆数据未能加载：${error.message}`;$('#apiStatus').textContent='请检查数据服务';}
 }
@@ -155,7 +157,7 @@ $('#nextBtn').onclick=()=>{
   setPlaying(false);selectChapter((chapter+1)%4);
 };
 $('#backBtn').onclick=()=>{setPlaying(false);selectChapter(Math.max(0,chapter-1));};
-$('#restartBtn').onclick=async()=>{if(!ready)return;clearTimeout(selectionTimer);selectedChoice=-1;chapters.forEach((c,i)=>c.ids=[...originalChapterIds[i]]);guides[1].hint='用店名和路口作地标，演示逐步指引。';$('#destinationChoices').querySelectorAll('input').forEach(input=>input.checked=false);guides[0].hint='选一个地点，接着体验路线指引。';setPlaying(false);await restoreQueues();frame.contentWindow.LouliDemo.reset();frame.contentWindow.LouliDemo.pause(true);if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&showcase=1&venue=${encodeURIComponent(venueId)}&floor=F1`;selectChapter(0);};
+$('#restartBtn').onclick=async()=>{if(!ready)return;clearTimeout(selectionTimer);selectedChoice=-1;chapters.forEach((c,i)=>c.ids=[...originalChapterIds[i]]);guides[1].hint='用店名和路口作地标，演示逐步指引。';$('#destinationChoices').querySelectorAll('input').forEach(input=>input.checked=false);guides[0].hint='选一个地点，接着体验路线指引。';setPlaying(false);await restoreQueues();frame.contentWindow.LouliDemo.reset();frame.contentWindow.LouliDemo.pause(true);if(hasSpatialView)referenceFrame.src='spatial-map.html?embed=1';else if(hasPublicView)referenceFrame.src=`reference-map.html?embed=1&showcase=1&venue=${encodeURIComponent(venueId)}&floor=F1`;selectChapter(0);};
 document.querySelectorAll('[data-venue]').forEach(b=>b.onclick=()=>switchVenue(b.dataset.venue==='mall'?'yintai-demo':b.dataset.venue));
 $('#showcase nav').addEventListener('click',async event=>{
   const link=event.target.closest('a');
