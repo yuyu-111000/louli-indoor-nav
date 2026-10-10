@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 公开楼层图参考</title><link rel="preload" href="assets/fonts/louli-ui-sans.woff" as="font" type="font/woff" crossorigin><link rel="stylesheet" href="styles/reference-map.css"><link rel="stylesheet" href="styles/typography.css"></head>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 公开楼层图参考</title><link rel="preload" href="assets/fonts/louli-ui-sans.woff" as="font" type="font/woff" crossorigin><link rel="stylesheet" href="styles/reference-map.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/glide-select.css"><link rel="stylesheet" href="styles/brand-logo.css"><link rel="stylesheet" href="styles/site-nav.css"></head>
 <body><main class="reference-app">
-  <header class="reference-header" id="standaloneHeader"><div class="reference-header-start"><a class="reference-back" id="backToShowcase" href="./?venue=yintai-demo"><span aria-hidden="true">←</span> 返回展示</a><a class="reference-brand" href="./">楼里 LOULI</a></div><span>公开地图参考 · 非实际导航</span></header>
+  <header class="reference-header" id="standaloneHeader"><div class="reference-header-start"><a class="brand louli-brand" href="./" aria-label="楼里首页"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><a class="reference-back" id="backToShowcase" href="./?venue=yintai-demo"><span aria-hidden="true">←</span> 返回展示</a></div><span>公开地图参考 · 非实际导航</span><div class="site-nav-slot" data-site-nav></div></header>
   <div class="reference-controls">
     <label>楼层<select id="floorSelect" aria-label="选择楼层"></select></label>
     <label>视图<select id="viewSelect" aria-label="选择局部视图"></select></label>
@@ -13,4 +13,4 @@
   <div id="selection" class="selection" hidden><b id="selectionName"></b><span id="selectionKind"></span><small>位置是截图上的标注点，并非店门或通路节点。</small><button id="closeSelection" aria-label="关闭地点详情">×</button></div>
   <div id="searchResults" class="search-results" hidden></div>
   <footer class="reference-footer"><span>百度地图公开视图 · 2026-10-09 截图 · 图上商户状态待核实</span><span>无已核实通路；<a id="simulationLink" href="demo.html?venue=yintai-demo">查看路线功能仿真 ↗</a></span></footer>
-</main><script type="module" src="js/reference-map.js"></script></body></html>
+</main><script type="module" src="js/reference-map.js"></script><script type="module" src="js/click-spark.js"></script><script type="module" src="js/site-nav.js"></script></body></html>

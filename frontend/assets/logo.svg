@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="444" height="262" viewBox="0 0 444 262" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">楼里</title>
+  <desc id="logo-description">米白色楼里定制建筑几何艺术字，透明背景，所有文字均为矢量路径。</desc>
+
+  <g id="chinese-wordmark" fill="#F6F9F5">
+    <!-- 定制建筑几何艺术字：细横厚竖、斜切端点与舒展的弧形收笔。 -->
+    <path id="wordmark-lou" transform="translate(40 39)"
+          d="M23 8L34 2V181H23Z
+             M2 49H47L54 42V57H2Z
+             M24 60L31 66Q20 108 0 132V117Q16 92 24 60Z
+             M33 74L53 94V108L33 86Z
+             M112 7L123 1V103H112Z
+             M70 15L78 10L103 35L97 42Z
+             M151 10L162 15L137 42L131 36Z
+             M65 49H166L174 42V57H65Z
+             M112 56L119 63Q99 86 65 103L61 96Q92 79 112 56Z
+             M122 56Q144 81 174 94L170 103Q138 88 116 64Z
+             M63 116H166L174 109V124H63Z
+             M106 100L117 104L91 143Q131 153 174 175L168 183Q125 158 79 148Z
+             M149 121L160 124Q143 174 66 183L63 175Q130 167 149 121Z"/>
+    <path id="wordmark-li" transform="translate(236 39)" fill-rule="nonzero"
+          d="M15 13H143L158 28V106H15Z
+             M26 21V55H81V21Z
+             M92 21V55H147V28L140 21Z
+             M26 63V98H81V63Z
+             M92 63V98H147V63Z
+             M81 106H92V170H81Z
+             M8 132H150L158 125V140H8Z
+             M0 172H158L168 164V181H0Z"/>
+  </g>
+</svg>

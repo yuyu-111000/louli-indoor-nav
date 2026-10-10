@@ -1,7 +1,24 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 室内导航产品展示</title><link rel="preload" href="assets/fonts/louli-ui-sans.woff" as="font" type="font/woff" crossorigin><link rel="stylesheet" href="styles/showcase.css"><link rel="stylesheet" href="styles/typography.css"></head>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 室内导航产品展示</title><link rel="preload" href="assets/fonts/louli-ui-sans.woff" as="font" type="font/woff" crossorigin><link rel="stylesheet" href="styles/showcase.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/launch.css"><link rel="stylesheet" href="styles/jelly-nav.css"><link rel="stylesheet" href="styles/brand-logo.css"></head>
 <body>
-<header class="site-header"><a class="brand" href="./">楼里<span>LOULI</span></a><nav aria-label="展示导航"><a href="demo.html" id="exploreLink">自由体验</a><a href="data-console.html">演示数据</a><button id="nearbyBtn">附近场馆</button><button id="materialsBtn">合作资料</button></nav><span class="demo-label">产品概念 · 仿真演示</span></header>
+<section class="launch" id="launch" aria-label="楼里启动页" hidden>
+  <div class="launch-track">
+    <div class="launch-stage">
+      <div class="launch-frame">
+        <img class="launch-media" src="assets/launch-wayfinding.svg" alt="" aria-hidden="true" fetchpriority="high">
+        <div class="launch-scrim" aria-hidden="true"></div>
+        <div class="launch-overlay" aria-hidden="true" inert>
+          <h2 class="launch-message" aria-label="在楼里，知道下一步去哪里"><span>在楼里，</span><span>知道下一步</span><span class="launch-accent">去哪里</span></h2>
+          <a class="launch-enter" href="#showcase">进入楼里 <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+      <div class="launch-topline"><a class="louli-brand" href="#showcase" aria-label="进入楼里"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><a class="launch-skip" href="#showcase">跳过开场 <span aria-hidden="true">↗</span></a></div>
+      <h1 class="launch-wordmark"><img src="assets/logo.svg" alt="楼里" width="444" height="262" fetchpriority="high"></h1>
+      <div class="launch-hint" aria-hidden="true"><span class="launch-hint-arrow">↓</span></div>
+    </div>
+  </div>
+</section>
+<header class="site-header" id="showcase" tabindex="-1"><a class="brand louli-brand" href="./" aria-label="楼里首页"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><nav aria-label="展示导航"><a href="demo.html" id="exploreLink">自由体验</a><a href="data-console.html">演示数据</a><button id="nearbyBtn">附近场馆</button><button id="materialsBtn">合作资料</button></nav><span class="demo-label">产品概念 · 仿真演示</span></header>
 <main class="showcase">
   <aside class="story-panel">
     <div class="eyebrow">INDOOR WAYFINDING</div>
@@ -22,5 +39,5 @@
   </section>
 </main>
 <dialog id="materials"><div class="dialog-head"><h2>合作资料</h2><button id="closeMaterials" aria-label="关闭">×</button></div><p>用产品体验开始讨论，从一个楼层验证合作价值。</p><a href="materials/hardware-design.pdf" target="_blank">硬件设计与原型路线 <span>PDF ↗</span></a><a href="materials/business-plan.pdf" target="_blank">产品与试点合作计划 <span>PDF ↗</span></a><a href="materials/commercial-research.pdf" target="_blank">商业调研与客户访谈 <span>PDF ↗</span></a><a href="materials/bom.csv" download>硬件 BOM <span>CSV ↓</span></a><a href="data-console.html">地图与演示数据导入 <span>打开 ↗</span></a><div class="pilot"><b>首轮合作建议</b><p>选一个楼层、一段就诊或逛店流程，确认地图、业务对接人和测试范围，再形成具体试点方案。</p></div></dialog>
-<dialog id="nearbyDialog" class="nearby-dialog"><div class="dialog-head"><h2>紫金港附近场馆</h2><button id="closeNearby" aria-label="关闭附近场馆">×</button></div><p>地址与室外锚点来自你提供的公开地图资料。距离为校园锚点到场馆的直线距离，不是出行路线。</p><div id="nearbyList"></div><p class="attribution">室外地点：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>。商场楼层参考图：百度地图公开视图，2026-10-09 截图；并非场馆官方平面图。图上商户待核实，路线和队列仍为仿真；医院仅接入地点资料。</p></dialog><script type="module" src="js/showcase.js"></script>
-</body></html>
+<dialog id="nearbyDialog" class="nearby-dialog"><div class="dialog-head"><h2>紫金港附近场馆</h2><button id="closeNearby" aria-label="关闭附近场馆">×</button></div><p>地址与室外锚点来自你提供的公开地图资料。距离为校园锚点到场馆的直线距离，不是出行路线。</p><div id="nearbyList"></div><p class="attribution">室外地点：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>。商场楼层参考图：百度地图公开视图，2026-10-09 截图；并非场馆官方平面图。图上商户待核实，路线和队列仍为仿真；医院仅接入地点资料。</p></dialog><script type="module" src="js/launch.js"></script><script type="module" src="js/showcase.js"></script><script type="module" src="js/jelly-nav.js"></script>
+<script type="module" src="js/click-spark.js"></script></body></html>

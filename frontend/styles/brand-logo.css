@@ -1,0 +1,36 @@
+/* Use the supplied vector unchanged; a mask gives the header its forest colour. */
+.launch-wordmark img {
+  display: block;
+  width: clamp(180px, 27vw, 380px);
+  max-width: 64vw;
+  height: auto;
+  object-fit: contain;
+}
+.louli-brand { display: inline-flex; align-items: center; text-decoration: none; flex-shrink: 0; min-height: 44px; gap: 8px; }
+.launch-topline { height: 80px; padding: 7px 40px; }
+.launch-topline .louli-brand .brand-logo { background: currentColor; }
+.launch-topline .louli-brand .brand-name { color: inherit; }
+.louli-brand .brand-name {
+  display: block;
+  color: #153d32;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 4px;
+}
+.louli-brand .brand-logo {
+  display: block;
+  width: 110px;
+  height: 65px;
+  background: #153d32;
+  -webkit-mask: url('../assets/logo.svg') center / contain no-repeat;
+  mask: url('../assets/logo.svg') center / contain no-repeat;
+}
+@media(max-width:700px) {
+  .launch-topline { padding: 7px 16px; }
+  .launch-wordmark img { width: clamp(180px, 58vw, 260px); }
+  .louli-brand .brand-logo { width: 90px; height: 53px; }
+  .louli-brand .brand-name { font-size: 11px; letter-spacing: 3.5px; }
+}
+@media(min-width:701px) and (max-width:1000px) { .launch-topline { padding: 7px 24px; } }

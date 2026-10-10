@@ -1,0 +1,15 @@
+/* JellyRadio's swelling chips and neighbour movement, in Louli's palette. */
+.site-header nav.jelly-nav{gap:8px;padding:10px 18px;isolation:isolate}
+.site-header nav.jelly-nav > :is(a,button){display:inline-flex;justify-content:center;align-items:center;position:relative;flex:none;height:44px;padding:0 14px;margin:0;border:1px solid #d8e6dc;border-radius:22px;background:#e6eee7;color:#47675a;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;transform-origin:center;touch-action:manipulation;transition:background-color 180ms ease,color 180ms ease,box-shadow 180ms ease}
+.site-header nav.jelly-nav > [data-on=true]{background:#153d32;border-color:#153d32;color:#f5f9f5;box-shadow:0 3px 10px #153d321a;z-index:1}
+.site-header nav.jelly-nav > :is(a,button):hover{background:#d2e7d8;color:#153d32}
+.site-header nav.jelly-nav > [data-on=true]:hover{background:#214f40;color:#fff}
+.site-header nav.jelly-nav > :is(a,button):focus-visible{outline:3px solid #42b997;outline-offset:4px}
+@media(max-width:700px){
+  .site-header:has(.jelly-nav){height:auto;min-height:112px;flex-wrap:wrap;gap:2px;padding:10px 16px 6px}
+  .site-header nav.jelly-nav{width:100%;margin-left:0;justify-content:center;gap:6px;padding:10px 10px}
+  .site-header nav.jelly-nav > :is(a,button){height:44px;padding:0 10px;font-size:12px}
+  .site-header nav.jelly-nav > a:nth-child(n){display:inline-flex}
+}
+@media(max-width:380px){.site-header nav.jelly-nav{gap:4px;padding:10px 8px}.site-header nav.jelly-nav > :is(a,button){padding:0 8px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.site-header nav.jelly-nav > :is(a,button){transition:none;transform:none!important}}

@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里导航体验</title><link rel="stylesheet" href="styles/demo.css"><link rel="stylesheet" href="styles/demo-extras.css"></head><body>
-<div id="app">
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里导航体验</title><link rel="stylesheet" href="styles/demo.css"><link rel="stylesheet" href="styles/demo-extras.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/brand-logo.css"><link rel="stylesheet" href="styles/site-nav.css"></head><body>
+<header class="demo-site-header"><a class="brand louli-brand" href="./" aria-label="楼里首页"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><div class="site-nav-slot" data-site-nav></div></header><div id="app">
   <canvas id="map" aria-label="室内地图"></canvas>
 
   <div class="side">
     <div class="topbar card">
       <div class="brandrow">
-        <div class="brand">楼里</div>
+        
         <div class="venue-name"><b id="venueTitle">示例购物中心</b><span id="venueSub">1F · 室内导航演示</span></div>
         <div class="seg" id="venueSeg" role="group" aria-label="切换场景">
           <button data-v="mall" aria-pressed="true">商场</button>
@@ -90,4 +90,4 @@
 </div>
 
 
-<div id="loadError" hidden role="alert"></div><script type="module" src="js/bootstrap.js"></script></body></html>
+<div id="loadError" hidden role="alert"></div><script type="module" src="js/bootstrap.js"></script><script type="module" src="js/click-spark.js"></script><script type="module" src="js/site-nav.js"></script></body></html>

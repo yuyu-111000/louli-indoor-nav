@@ -1,4 +1,5 @@
 import {getVenue,getFloor,defaultAsset,markersForAsset,searchFloor} from './reference-map-data.mjs';
+import {enhanceSelects,syncSelect} from './glide-select.js';
 const $=selector=>document.querySelector(selector);
 const query=new URLSearchParams(location.search);
 const showcaseVenue=query.get('venue')==='xixi-demo'?'xixi-demo':'yintai-demo';
@@ -18,11 +19,12 @@ function renderMarkers(){const layer=$('#markers');layer.replaceChildren();for(c
   button.style.left=`${poi.position.x/asset.width_px*100}%`;button.style.top=`${poi.position.y/asset.height_px*100}%`;button.onclick=()=>select(poi);layer.append(button);
 }if(selected?.position.asset_id===asset.id)select(selected);else{$('#selection').hidden=true;selected=null;}}
 function showAsset(id){asset=floor.map_assets.find(a=>a.id===id)||defaultAsset(floor);if(!asset)return;
-  $('#viewSelect').value=asset.id;$('#mapImage').src=asset.path;$('#mapImage').alt=`${venue.name} ${floor.id} ${viewNames[asset.view]||asset.view}的公开地图截图`;
+  $('#viewSelect').value=asset.id;syncSelect($('#viewSelect'));$('#mapImage').src=asset.path;$('#mapImage').alt=`${venue.name} ${floor.id} ${viewNames[asset.view]||asset.view}的公开地图截图`;
   $('#viewport').scrollTo(0,0);renderMarkers();layout();
 }
 function selectFloor(id){floor=getFloor(venue,id);if(!floor)return;
   $('#floorSelect').value=floor.id;const view=$('#viewSelect');view.replaceChildren(...floor.map_assets.map(a=>{const option=document.createElement('option');option.value=a.id;option.textContent=viewNames[a.view]||a.view;return option;}));
+  syncSelect($('#floorSelect'));
   const shops=floor.pois.filter(p=>p.type==='shop'||p.type==='food').length;
   $('#coverage').textContent=shops?`${floor.id} · 截图标注 ${floor.pois.length} 处，其中商户/餐饮 ${shops} 处。${floor.coverage_note}`:`${floor.id} · 当前以参考轮廓或停车内容为主。${floor.coverage_note}`;
   $('#poiSearch').value='';$('#searchResults').hidden=true;selected=null;zoom=1;showAsset(defaultAsset(floor)?.id);
@@ -38,6 +40,7 @@ $('#closeSelection').onclick=()=>{selected=null;$('#selection').hidden=true;docu
 $('#zoomIn').onclick=()=>{zoom=Math.min(3,zoom+0.5);layout();};
 $('#zoomOut').onclick=()=>{zoom=Math.max(1,zoom-0.5);layout();};
 window.addEventListener('resize',layout);
+enhanceSelects();
 try{const response=await fetch('data/public-floor-views.json');if(!response.ok)throw new Error('无法读取楼层索引');const data=await response.json();
   venue=getVenue(data,query.get('venue')==='xixi-demo'?'MALL-XIXI':'MALL-YINTAI');if(!venue)throw new Error('没有此场馆的公开楼层资料');
   $('#simulationLink').href=`demo.html?venue=${venue.id==='MALL-XIXI'?'xixi-demo':'yintai-demo'}`;

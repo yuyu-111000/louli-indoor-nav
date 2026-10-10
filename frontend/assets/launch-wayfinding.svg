@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" fill="none">
+  <rect width="1600" height="1000" fill="#153d32"/>
+  <defs>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" stroke="#9cdbc0" stroke-opacity=".06"/></pattern>
+    <radialGradient id="light"><stop stop-color="#28614d" stop-opacity=".65"/><stop offset="1" stop-color="#153d32" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#grid)"/>
+  <ellipse cx="830" cy="480" rx="700" ry="600" fill="url(#light)"/>
+  <g stroke="#9cdbc0" stroke-opacity=".16" stroke-width="2">
+    <path d="M120 120H405V330H120ZM120 365H405V575H120ZM120 610H405V825H120Z"/>
+    <path d="M1195 175H1480V390H1195ZM1195 425H1480V640H1195ZM1195 675H1480V890H1195Z"/>
+    <path d="M445 120H765V270H445ZM800 120H1155V270H800ZM445 730H765V890H445ZM800 730H1155V890H800Z"/>
+    <path d="M70 70H1530V935H70Z" stroke-opacity=".09"/>
+  </g>
+  <path d="M175 690H465V485H1100V340H1380" stroke="#9cdbc0" stroke-opacity=".21" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 12"/>
+  <g fill="#9cdbc0">
+    <circle cx="175" cy="690" r="7" fill-opacity=".5"/>
+    <circle cx="465" cy="485" r="5" fill-opacity=".26"/>
+    <circle cx="1100" cy="485" r="5" fill-opacity=".26"/>
+    <circle cx="1380" cy="340" r="7" fill-opacity=".5"/>
+  </g>
+  <circle cx="1380" cy="340" r="22" stroke="#9cdbc0" stroke-opacity=".18"/>
+  <circle cx="175" cy="690" r="22" stroke="#9cdbc0" stroke-opacity=".18"/>
+</svg>
