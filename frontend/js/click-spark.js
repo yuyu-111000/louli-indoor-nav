@@ -74,7 +74,7 @@ function draw(time) {
 }
 
 document.addEventListener('pointerdown', event => {
-  if (preference.matches || !context || event.button !== 0) return;
+  if ((preference.matches || window.LouliCare?.reduceMotion) || !context || event.button !== 0) return;
   const pointer = {x:event.clientX, y:event.clientY, time:performance.now(), moved:false};
   pointers.set(event.pointerId, pointer);
   // A pinch or a multi-touch gesture is not a tap.
@@ -106,3 +106,4 @@ document.addEventListener('visibilitychange', () => {if (document.hidden) clear(
 window.addEventListener('pagehide', clear);
 window.addEventListener('resize', clear);
 preference.addEventListener('change', clear);
+window.addEventListener('care-mode-change',clear);

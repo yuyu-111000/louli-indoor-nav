@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里导航体验</title><link rel="stylesheet" href="styles/demo.css"><link rel="stylesheet" href="styles/demo-extras.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/brand-logo.css"><link rel="stylesheet" href="styles/site-nav.css"></head><body>
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里导航体验</title><link rel="stylesheet" href="styles/demo.css"><link rel="stylesheet" href="styles/demo-extras.css"><link rel="stylesheet" href="styles/glide-select.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/brand-logo.css"><link rel="stylesheet" href="styles/site-nav.css"><link rel="stylesheet" href="styles/care-mode.css"><script src="js/care-mode.js"></script></head><body>
 <header class="demo-site-header"><a class="brand louli-brand" href="./" aria-label="楼里首页"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><div class="site-nav-slot" data-site-nav></div></header><div id="app">
   <canvas id="map" aria-label="室内地图"></canvas>
 
@@ -32,13 +32,13 @@
   </div>
 
   <div class="fab">
-    <button class="floor" title="当前楼层" aria-label="当前楼层 1F">1F</button>
+    <div class="floor-picker"><select id="floorSelect" aria-label="选择楼层" disabled><option value="1F">1F</option></select></div>
     <button id="zin" aria-label="放大"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
     <button id="zout" aria-label="缩小"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
     <button id="locate" aria-label="回到我的位置"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/></svg></button>
   </div>
 
-  <button class="con-pill" id="conPill"><span class="livedot"></span>融合误差 <b id="pillErr">–</b> m</button>
+  <button class="con-pill" id="conPill" aria-label="展开定位仿真控制台" aria-controls="console" aria-expanded="false"><span aria-hidden="true">←</span><b id="pillErr" hidden>–</b></button>
 
   <section class="console card" id="console" aria-label="定位仿真控制台">
     <div class="con-h">

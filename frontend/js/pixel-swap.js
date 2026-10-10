@@ -5,7 +5,7 @@ export function smoothSwap(options) {
 
 export function pixelSwap({source, swap, complete, smooth = false}) {
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
-  if (preference.matches || !source || (!smooth && !CSS.supports('clip-path', 'url(#pixel-swap-clip)'))) {
+  if (preference.matches || window.LouliCare?.reduceMotion || !source || (!smooth && !CSS.supports('clip-path', 'url(#pixel-swap-clip)'))) {
     swap(); complete(); return;
   }
   const width = innerWidth, height = innerHeight;
@@ -47,13 +47,14 @@ export function pixelSwap({source, swap, complete, smooth = false}) {
   const oldOverflow=document.documentElement.style.overflow;
   document.documentElement.style.overflow='hidden';
   let raf=0, finished=false;
-  const start=performance.now();
+  let start; // Start after the incoming page has painted, avoiding a skipped first frame.
   function finish(navigating=false) {
     if(finished)return;
     finished=true;cancelAnimationFrame(raf);
     window.removeEventListener('resize',resize);
     window.removeEventListener('pagehide',leave);
     preference.removeEventListener('change',reduced);
+    window.removeEventListener('care-mode-change',reduced);
     document.removeEventListener('keydown',blockKeys,true);
     inertStates.forEach(([node,value])=>node.inert=value);
     document.documentElement.style.overflow=oldOverflow;
@@ -62,11 +63,12 @@ export function pixelSwap({source, swap, complete, smooth = false}) {
   }
   const resize=()=>finish();
   const leave=()=>finish(true);
-  const reduced=()=>{if(preference.matches)finish();};
+  const reduced=()=>{if(preference.matches||window.LouliCare?.reduceMotion)finish();};
   function blockKeys(event) {
     if(['Tab',' ','ArrowDown','ArrowUp','PageDown','PageUp','Home','End'].includes(event.key))event.preventDefault();
   }
   function draw(time) {
+    start ??= time;
     const elapsed=time-start;
     if (smooth) {
       const progress=Math.max(0,Math.min(1,elapsed/600));
@@ -85,7 +87,9 @@ export function pixelSwap({source, swap, complete, smooth = false}) {
       // A short fade-like opening avoids a hard pop at the initial .35 scale.
       const scale=(.35+.65*eased)*Math.min(1,progress*5);
       const edge=size*scale, inset=(size-edge)/2;
-      holes+=`M${pixel.x+inset} ${pixel.y+inset}h${edge}v${edge}h${-edge}Z`;
+      // Subpixel precision is sufficient; shorter SVG paths reduce parsing each frame.
+      const e=edge.toFixed(2);
+      holes+=`M${(pixel.x+inset).toFixed(2)} ${(pixel.y+inset).toFixed(2)}h${e}v${e}h-${e}Z`;
     }
     path.setAttribute('d',outer+holes);
     if(elapsed<1400)raf=requestAnimationFrame(draw);
@@ -94,6 +98,7 @@ export function pixelSwap({source, swap, complete, smooth = false}) {
   window.addEventListener('resize',resize);
   window.addEventListener('pagehide',leave,{once:true});
   preference.addEventListener('change',reduced);
+  window.addEventListener('care-mode-change',reduced);
   document.addEventListener('keydown',blockKeys,true);
   try { swap(); raf=requestAnimationFrame(draw); }
   catch(error) {finish();throw error;}

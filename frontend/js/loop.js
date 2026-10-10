@@ -13,13 +13,26 @@ function frame(now){const dt=Math.min(.1,(now-lastT)/1000);lastT=now;
   if(ui.dirty)renderPanel();
   uiAcc+=dt;if(uiAcc>.25){uiAcc=0;updateBanner();}
   liveAcc+=dt;if(liveAcc>.5){liveAcc=0;updateLive();updateMetrics();drawChart();}
+  settlePan(dt);
   drawMap(now);requestAnimationFrame(frame);}
 
 readTheme();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
 new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 resetSim();initVenue(vKey);resize();fit();
-new ResizeObserver(()=>{resize();}).observe(cv);
+function positionCareTools(){
+  if(!window.LouliCare?.largeText||window.LouliSession.embed)return;
+  const topbar=document.querySelector('.topbar');
+  if(topbar)$('#app').style.setProperty('--care-tools-top',Math.ceil(topbar.getBoundingClientRect().bottom+10)+'px');
+}
+let careToolsFrame=0;
+function scheduleCareTools(){if(!careToolsFrame)careToolsFrame=requestAnimationFrame(()=>{careToolsFrame=0;positionCareTools();});}
+new ResizeObserver(scheduleCareTools).observe(document.querySelector('.topbar'));
+addEventListener('care-mode-change',scheduleCareTools);
+addEventListener('resize',scheduleCareTools);
+scheduleCareTools();
+let resizeFrame=0;
+new ResizeObserver(()=>{if(!resizeFrame)resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;resize();});}).observe(cv);
 addEventListener('resize',()=>{resize();fit();});
 if(document.fonts)document.fonts.ready.then(()=>{});
 requestAnimationFrame(frame);

@@ -13,3 +13,7 @@
 .map-frame{position:absolute;inset:0;visibility:hidden;opacity:0;pointer-events:none;transition:opacity 320ms ease,visibility 0s linear 320ms}
 .map-frame.is-visible{visibility:visible;opacity:1;pointer-events:auto;transition:opacity 320ms ease,visibility 0s}
 @media(prefers-reduced-motion:reduce){.map-frame{transition:none}}
+
+/* Separate the story from the map as a rounded card. */
+.story-panel{margin:16px;border-radius:24px;box-shadow:0 10px 28px #132e2914}
+@media(max-width:700px){.story-panel{margin:14px;border-radius:20px}}

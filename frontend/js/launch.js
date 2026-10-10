@@ -81,7 +81,7 @@ if (root && showcase) {
       animationTo = to;
       animationStart = performance.now();
       messageReached = false;
-      if (motionPreference.matches) finishExpansion();
+      if (motionPreference.matches || window.LouliCare?.reduceMotion) finishExpansion();
       else raf = requestAnimationFrame(tick);
     }
 
@@ -94,7 +94,7 @@ if (root && showcase) {
     }
 
     function onWheel(event) {
-      if (root.hidden || entering || event.ctrlKey || !event.deltaY) return;
+      if (root.hidden || entering || event.ctrlKey || !event.deltaY || event.target.closest?.('dialog')) return;
       event.preventDefault();
       const now = performance.now();
       const newGesture = now - lastWheel > 280;
@@ -113,7 +113,7 @@ if (root && showcase) {
     }
 
     function onTouchMove(event) {
-      if (!touchGesture || root.hidden || entering || event.touches.length !== 1) return;
+      if (!touchGesture || root.hidden || entering || event.touches.length !== 1 || event.target.closest?.('dialog')) return;
       // Native momentum must never drive the timeline or pass the message.
       event.preventDefault();
       const delta = touchGesture.startY - event.touches[0].clientY;
@@ -186,7 +186,7 @@ if (root && showcase) {
     function measure() {
       stageHeight = stage.clientHeight || innerHeight;
       track.style.height = `${stageHeight * 2.27}px`;
-      if (raf && motionPreference.matches) {
+      if (raf && (motionPreference.matches || window.LouliCare?.reduceMotion)) {
         cancelAnimationFrame(raf);
         finishExpansion();
       } else {
@@ -201,6 +201,7 @@ if (root && showcase) {
       root.hidden = true;
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('care-mode-change', measure);
       motionPreference.removeEventListener('change', measure);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
@@ -219,6 +220,7 @@ if (root && showcase) {
     root.querySelectorAll('a[href="#showcase"]').forEach(link => link.addEventListener('click', enter));
     window.addEventListener('scroll', onScroll, {passive: true});
     window.addEventListener('resize', measure);
+    window.addEventListener('care-mode-change', measure);
     window.addEventListener('wheel', onWheel, {passive: false});
     window.addEventListener('touchstart', onTouchStart, {passive: true});
     window.addEventListener('touchmove', onTouchMove, {passive: false});

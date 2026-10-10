@@ -56,7 +56,7 @@ if (group) {
       s.targetS=i===index?1+swell:.98;
       s.delay=instant||inFlight?0:Math.abs(i-index)*22+(i===index?0:10);
     });
-    if (instant||reduce.matches) settle();
+    if (instant||reduce.matches||window.LouliCare?.reduceMotion) settle();
     else if (!raf) {lastTime=0;raf=requestAnimationFrame(tick);}
   }
   chips.forEach((chip,i)=>{
@@ -79,10 +79,12 @@ if (group) {
   group.addEventListener('pointerleave',()=>{if(!group.contains(document.activeElement))reset();});
   group.addEventListener('focusout',()=>queueMicrotask(()=>{if(!group.contains(document.activeElement))reset();}));
   const measure=()=>apply(selected,true);
-  const resize=new ResizeObserver(measure);
+  let measureFrame=0;
+  const resize=new ResizeObserver(()=>{if(!measureFrame)measureFrame=requestAnimationFrame(()=>{measureFrame=0;measure();});});
   resize.observe(group);
   document.fonts.ready.then(measure);
   reduce.addEventListener('change',measure);
+  addEventListener('care-mode-change',measure);
   mobile.addEventListener('change',measure);
   apply(0,true);
 }

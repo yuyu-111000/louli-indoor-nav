@@ -42,3 +42,15 @@ test('simulated beacons follow each venue geometry with walkable, spaced anchors
     for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++)assert.ok(Math.hypot(points[i].x-points[j].x,points[i].y-points[j].y)>=spacing);
   }
 });
+
+test('photo floor packages preserve source shops and reachable same-floor targets',()=>{
+  const source=JSON.parse(fs.readFileSync(new URL('../data/yintai-kiosk/kiosk-map.json',import.meta.url)));
+  for(const floor of source.floors.filter(f=>f.id!=='1F')){
+    const bundle=JSON.parse(fs.readFileSync(new URL('../data/yintai-floors/'+floor.id+'.json',import.meta.url)));
+    assert.equal(bundle.map.trace.floor,floor.id);
+    assert.deepEqual(Object.keys(bundle.catalog.poi),floor.shops.map(s=>s.id));
+    assert.equal(bundle.map.trace.zones.length,floor.zones.length);
+    const c=grid(bundle);
+    for(const room of bundle.map.rooms){c.target=room;assert.ok(vm.runInContext('astar(MAP.start.x,MAP.start.y,target.dx+target.ix*3,target.dy+target.iy*3)',c),room.id);}
+  }
+});

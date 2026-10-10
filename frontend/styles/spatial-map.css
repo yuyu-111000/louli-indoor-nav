@@ -14,3 +14,23 @@
 .embedded .spatial-inspector,.embedded .stack-caption,.embedded .plan-heading p{display:none}
 .embedded .spatial-workspace{grid-template-columns:minmax(0,1fr)}
 .plan-view .plan-heading button{display:block}
+
+/* Keep the hit area fixed while the floor artwork lifts. */
+.stack-layer:hover,.stack-layer:focus-visible{transform:rotateX(51deg) rotateZ(-7deg)}
+.stack-layer svg,.stack-layer .layer-tag{transition:transform .35s ease;pointer-events:none}
+.stack-layer svg *{pointer-events:none}
+.stack-layer:hover svg,.stack-layer:focus-visible svg,.stack-layer:hover .layer-tag,.stack-layer:focus-visible .layer-tag{transform:translateY(-13px)}
+@media(prefers-reduced-motion:reduce){.stack-layer,.stack-layer svg,.stack-layer .layer-tag{transition:none}}
+
+/* Desktop selection uses contrast instead of moving floors. */
+@media(hover:hover) and (pointer:fine){
+  .stack-layer{transition:opacity 220ms ease,filter 220ms ease}
+  .stack-layer .floor-plate{transition:stroke 220ms ease,stroke-width 220ms ease}
+  .stack-layer:hover svg,.stack-layer:hover .layer-tag{transform:none}
+  .stack-layers:has(.stack-layer:hover) .stack-layer:not(:hover){opacity:.35}
+  .stack-layer:hover .floor-plate{stroke:#2b9472;stroke-width:16px}
+  .stack-layer:hover .layer-tag{background:#087b62}
+}
+.stack-layer:focus-visible .floor-plate{stroke:#2b9472;stroke-width:16px}
+.stack-layers:not(:has(.stack-layer:hover)):has(.stack-layer:focus-visible) .stack-layer:not(:focus-visible){opacity:.35}
+@media(prefers-reduced-motion:reduce){.stack-layer,.stack-layer .floor-plate{transition:none}}

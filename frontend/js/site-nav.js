@@ -26,7 +26,7 @@ if (slot && !new URLSearchParams(location.search).has('embed')) {
     row.dataset.flow=visible?'on':'off';
     const destination=visible?'translateY(0)':`translateY(${edge})`;
     overlay.style.transform=destination;
-    if (!preference.matches) animations.set(row,overlay.animate([
+    if (!(preference.matches||window.LouliCare?.reduceMotion)) animations.set(row,overlay.animate([
       {transform:visible && !inFlight?`translateY(${edge})`:current},
       {transform:destination}
     ],{duration:450,easing:'cubic-bezier(.23,1,.32,1)'}));
@@ -80,6 +80,7 @@ if (slot && !new URLSearchParams(location.search).has('embed')) {
     const r=dialog.getBoundingClientRect();
     if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();
   });
+  addEventListener('care-mode-change',()=>{if(window.LouliCare?.reduceMotion)dialog.querySelectorAll('.flow-nav-row').forEach(row=>animations.get(row)?.cancel());});
   refreshLinks();
   document.querySelector('#venueSelect')?.addEventListener('change',refreshLinks);
 }

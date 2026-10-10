@@ -15,7 +15,7 @@ const W2S=(x,y)=>[view.ox+x*view.s,view.oy+y*view.s];
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
 const FONT='"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
 function drawMap(now){
-  const W=cv.clientWidth,H=cv.clientHeight,s=view.s;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=T.ground;ctx.fillRect(0,0,W,H);
+  const W=cv.clientWidth,H=cv.clientHeight,s=view.s,care=!!window.LouliCare?.largeText;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=T.ground;ctx.fillRect(0,0,W,H);
   ctx.save();ctx.translate(view.ox,view.oy);ctx.scale(s,s);
   if(TRACE){drawPhotoFloor();}else{
   rr(ctx,-.6,-.6,BW+1.2,BH+1.2,1.6);ctx.fillStyle=T.block;ctx.fill();ctx.lineWidth=2.2/s;ctx.strokeStyle=T.wall;ctx.stroke();
@@ -37,7 +37,7 @@ function drawMap(now){
   const showRoute=nav.active&&nav.route;
   if(showRoute){const r=nav.route;const prog=project(r,disp).s;
     const line=(from,to,col,w)=>{ctx.beginPath();const a=pointAt(r,from);ctx.moveTo(a.x,a.y);for(let i=1;i<r.pts.length;i++)if(r.cum[i]>from&&r.cum[i]<to)ctx.lineTo(r.pts[i].x,r.pts[i].y);const b=pointAt(r,to);ctx.lineTo(b.x,b.y);ctx.strokeStyle=col;ctx.lineWidth=w/s;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();};
-    line(0,prog,T.done,7);line(prog,r.len,T['route-edge'],9);line(prog,r.len,T.accent,6.5);
+    line(0,prog,T.done,care?10:7);line(prog,r.len,T['route-edge'],care?14:9);line(prog,r.len,T.accent,care?9:6.5);
     ctx.strokeStyle=T.panel;ctx.lineWidth=1.8/s;const step=Math.max(3,46/s);
     for(let d=prog+step/2;d<r.len-1;d+=step){const p=pointAt(r,d),a=2.2/s*3.2;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.h);ctx.beginPath();ctx.moveTo(-a*.5,-a*.6);ctx.lineTo(a*.4,0);ctx.lineTo(-a*.5,a*.6);ctx.stroke();ctx.restore();}}
   // plan preview
@@ -57,8 +57,9 @@ function drawMap(now){
   for(const sl of SLOTS){const p=V.poi[sl.id];const [cx,cy]=W2S(sl.cx,sl.cy);const w=TRACE?120:(sl.x1-sl.x0)*s,h=TRACE?55:(sl.y1-sl.y0)*s;if(w<20||h<20)continue;
     const k=catOf(p)[2];const showName=w>46&&h>40;const gy=showName?cy-9:cy;
     ctx.beginPath();ctx.arc(cx,gy,9,0,7);ctx.fillStyle=T['g'+k];ctx.fill();ctx.fillStyle=T.panel;ctx.font=`700 10.5px ${FONT}`;ctx.fillText(catOf(p)[1],cx,gy+.5);
-    if(showName){ctx.font=`500 ${s>12?13:12}px ${FONT}`;let name=p.n;while(ctx.measureText(name).width>w-8&&name.length>2)name=name.slice(0,-1);if(name!==p.n)name=name.slice(0,-1)+'…';
-      if(TRACE){ctx.strokeStyle='#ffffff';ctx.lineWidth=4;ctx.strokeText(name,cx,cy+9);}ctx.fillStyle=T.ink;ctx.fillText(name,cx,cy+9);
+    if(showName){ctx.font=`${care?700:500} ${care?17:s>12?13:12}px ${FONT}`;let name=p.n;while(ctx.measureText(name).width>w-8&&name.length>2)name=name.slice(0,-1);if(name!==p.n)name=name.slice(0,-1)+'…';
+      if(TRACE||care){ctx.strokeStyle='#ffffff';ctx.lineWidth=care?6:4;ctx.strokeText(name,cx,cy+9);}ctx.fillStyle=T.ink;ctx.fillText(name,cx,cy+9);
+      if(care&&sl.id===selId){ctx.font=`700 13px ${FONT}`;ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.strokeText('✓ 已选',cx,cy+29);ctx.fillStyle='#07563f';ctx.fillText('✓ 已选',cx,cy+29);}
       if(s>11&&h>62){ctx.font=`11px ${FONT}`;ctx.fillStyle=T.muted;ctx.fillText(p.s,cx,cy+25);}
       const q=Q[sl.id];if(q&&s>8&&h>56){const txt=q.n>0?`等 ${q.n} ${q.unit}`:'无需等';ctx.font=`500 10.5px ${FONT}`;const tw=ctx.measureText(txt).width+10;const yy=cy+(s>11&&h>62?41:26);
         rr(ctx,cx-tw/2,yy-8,tw,16,5);ctx.fillStyle=q.n>4?T.warn:T.accent;ctx.globalAlpha=.16;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle=q.n>4?T.warn:T.accent;ctx.fillText(txt,cx,yy+.5);}}}
@@ -76,10 +77,10 @@ function drawMap(now){
   if(ekf.ready){const [x,y]=W2S(disp.x,disp.y);const h=ekf.s[2];
     const g=ctx.createRadialGradient(x,y,0,x,y,34);g.addColorStop(0,T['me-soft']);g.addColorStop(1,'rgba(0,0,0,0)');
     ctx.save();ctx.translate(x,y);ctx.rotate(h);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,34,-.5,.5);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.restore();
-    const pulse=(now/1400)%1;ctx.beginPath();ctx.arc(x,y,9+pulse*14,0,7);ctx.strokeStyle=T.me;ctx.globalAlpha=(1-pulse)*.45;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
+    const pulse=(window.LouliCare?.reduceMotion||beaconMotion.matches)?.5:(now/1400)%1;ctx.beginPath();ctx.arc(x,y,9+pulse*14,0,7);ctx.strokeStyle=T.me;ctx.globalAlpha=(1-pulse)*.45;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
     ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fillStyle=T.panel;ctx.fill();ctx.beginPath();ctx.arc(x,y,6.3,0,7);ctx.fillStyle=T.me;ctx.fill();}
   // scale bar
-  if(TRACE){if(!window.LouliSession.embed){ctx.fillStyle=T.muted;ctx.font=`11px ${FONT}`;ctx.textAlign='right';ctx.fillText('1F · 照片相对位置',W-28,H-24);}return;}
+  if(TRACE){if(!window.LouliSession.embed){ctx.fillStyle=T.muted;ctx.font=`11px ${FONT}`;ctx.textAlign='right';ctx.fillText(TRACE.floor+' · 照片相对位置',W-28,H-24);}return;}
   const m=s>14?5:s>6?10:20;const bx=window.LouliSession.embed?W-64-m*s:isMob()?14:W-70-m*s-10,by=window.LouliSession.embed?H-38:isMob()?H*.54-22:H-20;ctx.strokeStyle=T.muted;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx,by-4);ctx.lineTo(bx,by);ctx.lineTo(bx+m*s,by);ctx.lineTo(bx+m*s,by-4);ctx.stroke();
   ctx.fillStyle=T.muted;ctx.font=`11px "JetBrains Mono",monospace`;ctx.textAlign='left';ctx.fillText(`${m} m`,bx+m*s+6,by-2);}
 
@@ -99,7 +100,7 @@ const beaconMotion=matchMedia('(prefers-reduced-motion: reduce)');
 function drawBeacons(now){
   for(const [i,beacon] of BCN.entries()){
     const [x,y]=W2S(beacon.x,beacon.y);
-    const pulse=beaconMotion.matches ? .5 : (Math.sin(now/260+i*.9)+1)/2;
+    const pulse=(beaconMotion.matches||window.LouliCare?.reduceMotion) ? .5 : (Math.sin(now/260+i*.9)+1)/2;
     ctx.save();ctx.fillStyle='#ee8b36';ctx.globalAlpha=.12+pulse*.14;
     ctx.beginPath();ctx.arc(x,y,7+pulse*4,0,Math.PI*2);ctx.fill();
     ctx.globalAlpha=.55+pulse*.45;ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();

@@ -15,7 +15,7 @@ const venueId=new URLSearchParams(location.search).get('venue')||'yintai-demo';
 const publicViews={'yintai-demo':['PANDORA','LEGO乐高','星巴克臻选'],'xixi-demo':['丝芙兰Sephora','优衣库','泡泡玛特POP MART']};
 const hasSpatialView=venueId==='yintai-demo';
 let hasPublicView=Object.hasOwn(publicViews,venueId);
-function setPlaying(value){playing=value;paintPlayback($('#playBtn'),value);frame.contentWindow.LouliDemo?.pause(!value);clearInterval(timer);if(value)timer=setInterval(()=>{if(chapter===3){setPlaying(false);return;}selectChapter(chapter+1);},12000);}
+function setPlaying(value){playing=value;paintPlayback($('#playBtn'),value);frame.contentWindow.LouliDemo?.pause(!value);clearInterval(timer);if(value&&!window.LouliCare?.manualSteps&&!window.LouliCare?.reduceMotion)timer=setInterval(()=>{if(chapter===3){setPlaying(false);return;}selectChapter(chapter+1);},12000);}
 function paintNavigation(){
   $('#backBtn').disabled=!ready||transitioning||chapter===0;
   $('#nextBtn').disabled=!ready||transitioning||(chapter===0&&selectedChoice<0);
@@ -45,11 +45,11 @@ function paintChapter(){
 async function selectChapter(index){
   if(!ready)return;clearTimeout(selectionTimer);if(index===0&&playing)setPlaying(false);const previous=chapter;chapter=index;
   if(previous!==chapter){
-    clearTimeout(transitionTimer);transitioning=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+    clearTimeout(transitionTimer);transitioning=!(matchMedia('(prefers-reduced-motion: reduce)').matches||window.LouliCare?.reduceMotion);
     if(transitioning)transitionTimer=setTimeout(()=>{transitioning=false;paintNavigation();},400);
   }
   paintChapter();
-  if(previous!==chapter){contentAnimation?.cancel();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)contentAnimation=$('#stepContent').animate([{opacity:0,transform:`translateX(${chapter>previous?22:-22}px)`},{opacity:1,transform:'translateX(0)'}],{duration:320,easing:'cubic-bezier(.22,1,.36,1)'});}frame.contentWindow.LouliDemo.chapter(chapters[chapter].action,chapters[chapter].ids);
+  if(previous!==chapter){contentAnimation?.cancel();if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&!window.LouliCare?.reduceMotion)contentAnimation=$('#stepContent').animate([{opacity:0,transform:`translateX(${chapter>previous?22:-22}px)`},{opacity:1,transform:'translateX(0)'}],{duration:320,easing:'cubic-bezier(.22,1,.36,1)'});}frame.contentWindow.LouliDemo.chapter(chapters[chapter].action,chapters[chapter].ids);
   if(chapters[chapter].action==='queue'){
     const id=chapters[chapter].ids[0];const queues=originalQueues.map(q=>({...q,ahead:q.poiId===id?1:q.ahead}));
     try {await writeQueues(bundle.venue.id,queues);changedQueues=true;$('#apiStatus').textContent='模拟队列已写入接口';}catch{$('#apiStatus').textContent='本地模拟队列';}
@@ -125,11 +125,11 @@ function chooseDestination(index,preview=true){
   const queue=originalQueues.find(q=>q.poiId===choice.id);
   chapters[2].ids=queue?[choice.id]:[...originalChapterIds[2]];
   guides[1].hint=hasPublicView?`以${bundle.catalog.poi[choice.id].n}体验示意路线。`:`前往${choice.name}，跟着地标走。`;
-  guides[0].hint=`已选${choice.name}，接下来体验路线指引。`;
+  guides[0].hint=(window.LouliCare?.manualSteps||window.LouliCare?.reduceMotion)?`已选${choice.name}，点击“开始带路”后出发。`:`已选${choice.name}，接下来体验路线指引。`;
   paintChapter();
   if(preview&&hasPublicView)referenceFrame.contentWindow.LouliReference?.selectByName(choice.name);
   if(preview&&!hasPublicView)frame.contentWindow.LouliDemo?.select(choice.id);
-  selectionTimer=setTimeout(startGuidedRoute,650);
+  if(!window.LouliCare?.manualSteps&&!window.LouliCare?.reduceMotion)selectionTimer=setTimeout(startGuidedRoute,650);
 }
 function startGuidedRoute(){
   if(!ready||chapter!==0||selectedChoice<0)return;
@@ -163,6 +163,10 @@ $('#showcase nav').addEventListener('click',async event=>{
   const link=event.target.closest('a');
   if(!link||!changedQueues||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
   event.preventDefault();await restoreQueues();location.href=link.href;
+});
+addEventListener('care-mode-change',()=>{
+  if(window.LouliCare?.manualSteps||window.LouliCare?.reduceMotion){clearTimeout(selectionTimer);setPlaying(false);}
+  if(window.LouliCare?.reduceMotion){contentAnimation?.cancel();clearTimeout(transitionTimer);transitioning=false;if(ready)paintNavigation();}
 });
 paintPlayback($('#playBtn'),false);
 loadSceneChoices();
