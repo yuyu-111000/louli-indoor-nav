@@ -8,9 +8,9 @@
     <label class="search-label">图上标注<input id="poiSearch" type="search" placeholder="搜索本层店铺或入口" aria-label="搜索本层标注"></label>
     <div class="zoom-controls" aria-label="地图缩放"><button id="zoomOut" aria-label="缩小地图">−</button><button id="zoomIn" aria-label="放大地图">＋</button></div>
   </div>
-  <p class="coverage" id="coverage">正在读取公开地图资料…</p>
+  <p class="map-error" id="mapError" role="status" hidden></p>
   <div class="reference-viewport" id="viewport"><div class="map-plane" id="mapPlane"><img id="mapImage" alt="所选楼层的公开地图截图"><div id="markers" class="markers"></div></div></div>
   <div id="selection" class="selection" hidden><b id="selectionName"></b><span id="selectionKind"></span><small>位置是截图上的标注点，并非店门或通路节点。</small><button id="closeSelection" aria-label="关闭地点详情">×</button></div>
   <div id="searchResults" class="search-results" hidden></div>
-  <footer class="reference-footer"><span>百度地图公开视图 · 2026-10-09 截图 · 图上商户状态待核实</span><span>无已核实通路；<a id="simulationLink" href="demo.html?venue=yintai-demo">查看路线功能仿真 ↗</a></span></footer>
+  <footer class="reference-footer"><span>百度地图公开视图 · 2026-10-09 截图 · 图上商户状态待核实</span></footer>
 </main><script type="module" src="js/reference-map.js"></script><script type="module" src="js/click-spark.js"></script><script type="module" src="js/site-nav.js"></script></body></html>

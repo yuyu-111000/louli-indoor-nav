@@ -16,8 +16,8 @@ function landmark(x,y,ex){let best=null,bd=10;for(const s of SLOTS){if(s.id===ex
 function navInstr(){const r=nav.route;if(!r)return null;const pr=project(r,disp);const s=pr.s,remain=Math.max(0,r.len-s);const dest=P(nav.legs[nav.i]);
   const next=r.turns.find(t=>t.s>s+.8);
   if(next){const d=next.s-s;const w=turnWord(next.ang);const lm=landmark(next.x,next.y,dest.id);
-    return {icon:Math.abs(next.ang)>rad(135)?'u':next.ang>0?'right':'left',main:d<4?w:`${Math.round(d)} 米后${w}`,sub:lm?`在「${lm}」附近`:'沿通道继续前行',remain,s};}
-  return {icon:remain<6?'arrive':'up',main:remain<4?'即将到达':`直行 ${Math.round(remain)} 米`,sub:`到达「${dest.n}」`,remain,s};}
+    return {icon:Math.abs(next.ang)>rad(135)?'u':next.ang>0?'right':'left',main:d<4?w:TRACE?`前方${w}`:`${Math.round(d)} 米后${w}`,sub:lm?`在「${lm}」附近`:'沿通道继续前行',remain,s};}
+  return {icon:remain<6?'arrive':'up',main:remain<4?'即将到达':TRACE?'沿图上路线直行':`直行 ${Math.round(remain)} 米`,sub:`到达「${dest.n}」${TRACE?'附近的演示接近点':''}`,remain,s};}
 const ICONS={
   up:'<path d="M22 36V10M12 20l10-10 10 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
   left:'<path d="M28 38V22a6 6 0 0 0-6-6H10M17 9l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',

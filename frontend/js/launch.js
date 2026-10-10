@@ -1,4 +1,5 @@
 // ScrollExpand's clip-path, zoom and text handoff adapted to this static site.
+import {pixelSwap, smoothSwap} from './pixel-swap.js';
 const root = document.querySelector('#launch');
 const showcase = document.querySelector('#showcase');
 if (root && showcase) {
@@ -37,9 +38,102 @@ if (root && showcase) {
     };
     let stageHeight = 1;
     let current = 0;
-    let target = 0;
     let raf = 0;
-    let previousTime = 0;
+    let animationStart = 0;
+    let animationFrom = 0;
+    let animationTo = 0;
+    let messageTime = 0;
+    const expansionDuration = 1050;
+    let entering = false;
+    let messageReached = false;
+    let lastWheel = 0;
+    let touchGesture = null;
+
+    const messageTop = () => stageHeight * 1.05;
+    function showMain() {
+      dismiss();
+      history.replaceState(history.state, '', '#showcase');
+      showcase.scrollIntoView({behavior: 'instant', block: 'start'});
+      showcase.focus({preventScroll: true});
+    }
+
+    function transitionToMain(pixel = false) {
+      if (entering || root.hidden) return;
+      entering = true;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      const transition = pixel ? pixelSwap : smoothSwap;
+      transition({source: stage, swap: showMain, complete: () => showcase.focus({preventScroll: true})});
+    }
+
+    function finishExpansion() {
+      raf = 0;
+      current = animationTo;
+      messageReached = current === 1;
+      if (messageReached) messageTime = performance.now();
+      paint(current);
+      window.scrollTo({top: messageTop() * current, behavior: 'instant'});
+    }
+
+    function expand(to = 1) {
+      if (raf || entering || current === to) return;
+      animationFrom = current;
+      animationTo = to;
+      animationStart = performance.now();
+      messageReached = false;
+      if (motionPreference.matches) finishExpansion();
+      else raf = requestAnimationFrame(tick);
+    }
+
+    function advance() {
+      if (raf || entering) return;
+      if (messageReached) {
+        // Ignore the tail of the gesture that opened the message.
+        if (performance.now() - messageTime >= 350) transitionToMain();
+      } else expand();
+    }
+
+    function onWheel(event) {
+      if (root.hidden || entering || event.ctrlKey || !event.deltaY) return;
+      event.preventDefault();
+      const now = performance.now();
+      const newGesture = now - lastWheel > 280;
+      lastWheel = now;
+      if (!newGesture || raf) return;
+      if (event.deltaY > 0) advance();
+      else expand(0);
+    }
+
+    function onTouchStart(event) {
+      touchGesture = event.touches.length === 1 ? {
+        startY: event.touches[0].clientY,
+        eligible: !raf && !entering,
+        consumed: false
+      } : null;
+    }
+
+    function onTouchMove(event) {
+      if (!touchGesture || root.hidden || entering || event.touches.length !== 1) return;
+      // Native momentum must never drive the timeline or pass the message.
+      event.preventDefault();
+      const delta = touchGesture.startY - event.touches[0].clientY;
+      if (Math.abs(delta) < 12 || touchGesture.consumed) return;
+      touchGesture.consumed = true;
+      if (!touchGesture.eligible) return;
+      if (delta > 0) advance();
+      else expand(0);
+    }
+    function onTouchEnd() { touchGesture = null; }
+
+    function onScrollKey(event) {
+      if (root.hidden || entering || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (!['ArrowDown','PageDown','End',' ','ArrowUp','PageUp','Home'].includes(event.key)) return;
+      if (event.target.closest?.('a,button,input,textarea,select,[contenteditable]')) return;
+      event.preventDefault();
+      if (event.repeat) return;
+      if (['ArrowUp','PageUp','Home'].includes(event.key) || (event.key === ' ' && event.shiftKey)) expand(0);
+      else advance();
+    }
 
     function paint(progress) {
       const eased = smoothstep(0, 1, progress);
@@ -67,46 +161,38 @@ if (root && showcase) {
       topline.style.color = progress > .86 ? '#f5f9f5' : 'var(--ink)';
     }
 
-    function readProgress() {
-      return clamp(-track.getBoundingClientRect().top / (stageHeight * 1.05));
-    }
-
     function tick(time) {
-      const elapsed = previousTime ? Math.min(64, time - previousTime) : 16.7;
-      previousTime = time;
-      current += (target - current) * (1 - Math.exp(-elapsed / 100));
-      if (Math.abs(target - current) < .0004) current = target;
+      const elapsed = clamp((time - animationStart) / expansionDuration);
+      current = animationFrom + (animationTo - animationFrom) * elapsed;
       paint(current);
-      if (current !== target) raf = requestAnimationFrame(tick);
-      else { raf = 0; previousTime = 0; }
+      window.scrollTo({top: messageTop() * current, behavior: 'instant'});
+      if (elapsed < 1) raf = requestAnimationFrame(tick);
+      else finishExpansion();
     }
 
     function onScroll() {
-      if (showcase.getBoundingClientRect().top <= 1) {
-        const remaining = Math.max(0, scrollY - root.offsetHeight);
-        dismiss();
-        window.scrollTo(0, remaining);
-        return;
-      }
-      target = readProgress();
-      if (motionPreference.matches) {
-        if (raf) cancelAnimationFrame(raf);
-        raf = 0;
-        current = target;
-        paint(current);
-      } else if (!raf && current !== target) {
-        raf = requestAnimationFrame(tick);
+      if (root.hidden || entering) return;
+      const expected = messageTop() * current;
+      // Scrollbar/assistive scrolling uses the same fixed timeline as gestures.
+      const delta = scrollY - expected;
+      if (Math.abs(delta) < 2) return;
+      window.scrollTo({top: expected, behavior: 'instant'});
+      if (!raf) {
+        if (delta > 0) advance();
+        else expand(0);
       }
     }
 
     function measure() {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-      previousTime = 0;
       stageHeight = stage.clientHeight || innerHeight;
       track.style.height = `${stageHeight * 2.27}px`;
-      current = target = readProgress();
-      paint(current);
+      if (raf && motionPreference.matches) {
+        cancelAnimationFrame(raf);
+        finishExpansion();
+      } else {
+        paint(current);
+        window.scrollTo({top: messageTop() * current, behavior: 'instant'});
+      }
     }
 
     function dismiss() {
@@ -116,19 +202,29 @@ if (root && showcase) {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', measure);
       motionPreference.removeEventListener('change', measure);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      window.removeEventListener('keydown', onScrollKey);
     }
 
     function enter(event) {
       event.preventDefault();
-      dismiss();
-      history.replaceState(history.state, '', '#showcase');
-      showcase.scrollIntoView({behavior: 'instant', block: 'start'});
-      showcase.focus({preventScroll: true});
+      if (entering) return;
+      transitionToMain(event.currentTarget.classList.contains('launch-enter'));
     }
 
     root.querySelectorAll('a[href="#showcase"]').forEach(link => link.addEventListener('click', enter));
     window.addEventListener('scroll', onScroll, {passive: true});
     window.addEventListener('resize', measure);
+    window.addEventListener('wheel', onWheel, {passive: false});
+    window.addEventListener('touchstart', onTouchStart, {passive: true});
+    window.addEventListener('touchmove', onTouchMove, {passive: false});
+    window.addEventListener('touchend', onTouchEnd, {passive: true});
+    window.addEventListener('touchcancel', onTouchEnd, {passive: true});
+    window.addEventListener('keydown', onScrollKey);
     motionPreference.addEventListener('change', measure);
     window.addEventListener('pagehide', dismiss, {once: true});
     measure();

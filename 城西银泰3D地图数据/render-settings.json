@@ -1,0 +1,59 @@
+{
+  "modelType": "2.5D SVG polygons with visual depth and CSS floor transforms",
+  "physicalDimensionsKnown": false,
+  "coordinateSystem": {
+    "width": 1706,
+    "height": 1279,
+    "unit": "photo pixel",
+    "meaning": "照片中的相对位置；没有实际建筑比例或通路拓扑"
+  },
+  "colors": {
+    "rose": "#d97979",
+    "amber": "#deb582",
+    "yellow": "#edce55",
+    "green": "#9cc270",
+    "cyan": "#5dc5d3",
+    "blue": "#7c9ee4"
+  },
+  "floorPlate": {
+    "path": "M80 420 Q170 290 470 275 L900 235 L1335 245 Q1490 260 1530 425 L1500 805 Q1380 1010 1210 1050 L900 850 L350 760 Z",
+    "provenance": "UI illustrative outline; not measured building boundary"
+  },
+  "shapeViewBox": [
+    40,
+    215,
+    1520,
+    880
+  ],
+  "visualDepth": {
+    "singleFloor": 16,
+    "stack": 25,
+    "unit": "photo-coordinate units; visual offset, not physical height"
+  },
+  "sideFaceRule": "screen-space polygon edge extended in +y by depth; visible edges follow spatial-data.mjs",
+  "shadowOffset": {
+    "x": 5,
+    "y": "depth + 7"
+  },
+  "stack": {
+    "floorOrderTopToBottom": [
+      "4F",
+      "3F",
+      "2F",
+      "1F",
+      "B1"
+    ],
+    "perspectivePx": 950,
+    "rotateXDeg": 51,
+    "rotateZDeg": -7,
+    "desktopTopPercentFormula": "-3 + level * 9",
+    "desktopWidthPercent": 83,
+    "desktopHeightPercent": 50,
+    "hoverTranslateYPx": -13,
+    "responsiveStyles": "See renderer/spatial-map.css for all viewport overrides"
+  },
+  "sourcePhotoPaths": {
+    "originalPrefix": "data/yintai-kiosk/photos/",
+    "exportPrefix": "photos/"
+  }
+}

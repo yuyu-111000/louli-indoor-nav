@@ -1,0 +1,56 @@
+/* React Bits Stepper's circles, connectors and directional handoff in Louli's palette. */
+.story-stepper{border:1px solid #527767;border-radius:18px;padding:16px;background:#193f34;box-shadow:0 12px 28px #102b2514;min-width:0}
+.stepper-heading{display:flex;align-items:center;justify-content:space-between;color:#a9c4b6;font-size:11px;letter-spacing:1px;margin-bottom:16px}
+.stepper-heading #chapterNumber{font-variant-numeric:tabular-nums;letter-spacing:2px}
+.stepper-indicators{display:flex;align-items:flex-start;margin-bottom:22px}
+.stepper-indicators button{position:relative;flex:1;min-width:0;border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:7px;color:#aac5b7;font-size:11px;isolation:isolate}
+.stepper-indicators button:not(:last-child)::after{content:'';position:absolute;top:17px;left:calc(50% + 20px);width:calc(100% - 40px);height:2px;background:#527767;z-index:-1;transition:background-color 300ms ease}
+.stepper-indicators button[data-state=complete]::after{background:#9cdbc0}
+.step-circle{display:grid;place-items:center;width:36px;height:36px;border:1px solid #668777;border-radius:50%;background:#21483a;color:#b8cec2;font-size:12px;font-weight:600;transition:background-color 300ms ease,color 300ms ease,transform 300ms cubic-bezier(.22,1,.36,1),box-shadow 300ms ease}
+.stepper-indicators button[data-state=active]{color:#f5f9f5}
+.stepper-indicators button[data-state=active] .step-circle{background:#c7ecda;color:#153d32;border-color:#c7ecda;transform:scale(1.08);box-shadow:0 0 0 4px #9cdbc015}
+.stepper-indicators button[data-state=complete] .step-circle{background:#9cdbc0;border-color:#9cdbc0;color:#153d32}
+.stepper-indicators button:hover .step-circle{box-shadow:0 0 0 4px #9cdbc024}
+.stepper-indicators button:focus-visible{outline:0}
+.stepper-indicators button:focus-visible .step-circle{outline:3px solid #9cdbc0;outline-offset:4px}
+.step-check{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.step-check:not([hidden]) path{stroke-dasharray:24;animation:step-check-draw 300ms ease-out}
+.stepper-content{min-height:110px;overflow:hidden}
+.stepper-content h2{font-size:20px;line-height:1.4;font-weight:600;letter-spacing:-.4px;margin:0 0 8px}
+.stepper-content p{font-size:12px;line-height:1.7;color:#b8cec2;margin:0}
+.stepper-content .task-list{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0;list-style:none;padding:0}
+.stepper-content .task-list li{display:block;padding:4px 7px;background:#9cdbc010;border-radius:5px;color:#cce0d4;font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stepper-content .task-list li span{display:none}
+.stepper-controls{margin-top:16px}
+.stepper-play{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:44px;border:0;border-radius:10px;background:#c7ecda;color:#153d32;font-size:12px;font-weight:600}
+.stepper-play:hover{background:#e0f4e9}
+.stepper-navigation{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
+.stepper-navigation button{min-height:38px;padding:0 6px;background:none;border:0;color:#c7ecda;font-size:12px}
+.stepper-navigation button:last-child{margin-left:auto}
+.stepper-navigation button:disabled{opacity:.35;cursor:default}
+.stepper-footer{border-top:1px solid #456659;margin-top:6px;padding-top:12px;display:flex;justify-content:center}
+.stepper-footer button{display:inline-flex;gap:6px;align-items:center;justify-content:center;border:1px solid #668777;border-radius:999px;background:#234b3c;color:#e0f1e6;padding:0 14px;min-height:38px;font-size:12px}
+.stepper-footer button:hover{background:#2d5b47;border-color:#9cdbc0}
+
+.showcase{min-height:760px}
+@keyframes step-check-draw{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+@media(min-width:701px) and (max-height:820px){.showcase{min-height:660px}.story-panel{padding:24px 26px 18px}.story-panel h1{font-size:32px;margin:14px 0 18px}.story-stepper{padding:14px}.stepper-content{min-height:100px}.stepper-indicators{margin-bottom:16px}.stepper-content h2{font-size:18px}}
+@media(max-width:1000px) and (min-width:701px){.stepper-content h2{font-size:18px}.story-stepper{padding:14px}}
+@media(max-width:700px){.showcase{min-height:0}.story-stepper{max-width:480px;width:100%;margin:0 auto}.stepper-content{min-height:100px}.stepper-content h2{font-size:21px}.stepper-content .task-list{display:flex;margin-top:10px}.stepper-navigation button,.stepper-footer button{min-height:44px}.story-panel>.source-note{max-width:none;padding-top:12px;margin-top:0;text-align:center}.stepper-indicators{margin-bottom:18px}}
+@media(prefers-reduced-motion:reduce){.step-circle,.stepper-indicators button::after{transition:none}.step-check path{animation:none!important}}
+
+.story-stepper{overflow:hidden;will-change:height;flex:none}
+@media(min-width:701px){.showcase{grid-template-rows:minmax(0,1fr)}.story-panel{min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#527767 #153d32}}
+.destination-choices{border:0;padding:0;margin:14px 0 0;min-width:0;display:grid;gap:7px}
+.destination-choices legend{font-size:11px;color:#a9c4b6;padding:0;margin-bottom:8px}
+.destination-choices label{display:flex;align-items:center;gap:9px;min-height:40px;padding:8px 10px;border:1px solid #527767;border-radius:9px;background:#21483a;color:#d7e8dd;font-size:12px;cursor:pointer;transition:background-color 180ms ease,border-color 180ms ease,transform 180ms ease}
+.destination-choices label:hover{background:#2c5947}
+.destination-choices label:has(input:checked){background:#c7ecda;color:#153d32;border-color:#c7ecda;transform:translateX(2px)}
+.destination-choices label span:last-child{margin-left:auto}
+.destination-choices input{accent-color:#087b62;width:15px;height:15px;margin:0;flex:none}
+.destination-choices label:focus-within{outline:2px solid #9cdbc0;outline-offset:2px}
+.scene-switch button{font-size:16px;font-weight:500;min-height:44px}
+@media(max-width:700px){.scene-switch{width:100%;max-width:340px}.scene-switch button{font-size:16px}.destination-choices label{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.destination-choices label{transition:none;transform:none!important}}
+
+.playback-icon{display:block;flex:none}

@@ -15,5 +15,11 @@ export function buildStory(bundle) {
     chapters[1].caption='演示入口、服务台与目标点的指引方式。路线和距离依据示意图计算。';
     chapters[2].caption='用模拟排队说明返回提醒；没有连接本商场的真实商户或叫号系统。';
   }
+  if(bundle.map.trace){
+    chapters[0].title='在城西银泰1F找店';
+    chapters[0].caption='轮廓和店名来自导览照片，点选一个店铺开始体验。';
+    chapters[1].caption='在同一张1F照片轮廓图上演示路线；通路与接近点尚未现场核实。';
+    chapters[2].caption='用模拟队列演示返回提醒，未连接商户叫号。';
+  }
   return chapters;
 }

@@ -9,3 +9,17 @@
 .reference-back:hover{background:#e6f1e9;border-color:#9cb5a9}
 .reference-brand{white-space:nowrap}
 @media(max-width:700px){.reference-header{gap:8px}.reference-header-start{gap:10px}.reference-header .reference-back{padding:0 9px}.reference-brand{font-size:12px}.reference-header>span{max-width:130px;font-size:10px;line-height:1.4;text-align:right}}
+
+/* Clearer labels with compact controls, leaving the map more room. */
+.reference-controls{gap:10px;padding-bottom:14px}
+.reference-controls label{font-size:14px;line-height:1.4;gap:7px;color:#173d32}
+.reference-controls input{height:44px;font-size:14px}
+.reference-controls .glide-select__trigger{font-size:14px}
+.zoom-controls button{width:44px;height:44px}
+.map-error{margin:0;padding:8px 24px;color:#a3352b;font-size:13px}
+@media(max-width:700px){.reference-controls{gap:8px;padding-bottom:12px}.reference-controls label{font-size:14px}.reference-controls .glide-select__trigger{font-size:13px}.reference-controls input{height:44px;font-size:14px}}
+
+@media(max-width:700px){.embedded .reference-footer span:last-child{display:block;margin-top:5px}.reference-footer a{display:inline-flex;align-items:center;min-height:28px}}
+
+.embedded.with-venue-picker .reference-controls{padding-top:140px}
+@media(max-width:700px){.embedded.with-venue-picker .reference-controls{padding-top:204px}}

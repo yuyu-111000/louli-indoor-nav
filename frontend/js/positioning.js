@@ -1,10 +1,8 @@
 /* ============ radio environment ============ */
 const APS=[];[18,36,54,70,86,104,122].forEach(x=>{APS.push({x,y:20});APS.push({x,y:64});});
 APS.push({x:18,y:34},{x:18,y:50},{x:122,y:34},{x:122,y:50},{x:70,y:28},{x:70,y:58},{x:6,y:20},{x:134,y:20},{x:6,y:66},{x:134,y:66},{x:32,y:33},{x:108,y:51});
-const BCN=[];for(let x=18;x<=122;x+=8){BCN.push({x,y:20});BCN.push({x,y:64});}
-for(let y=28;y<=56;y+=8){BCN.push({x:18,y});BCN.push({x:122,y});BCN.push({x:70,y});}
-BCN.push({x:70,y:76},{x:7,y:42},{x:133,y:42});
-for(const p of [...APS,...BCN]){p.x=p.x*BW/140;p.y=p.y*BH/84;}
+for(const p of APS){p.x=p.x*BW/140;p.y=p.y*BH/84;}
+const BCN=buildBeaconLayout(MAP,window.LouliSession.bundle.catalog.poi);
 const EM=[...APS.map(p=>({...p,k:'ap',P0:-38,n:2.7,sd:4.5,thr:-88})),...BCN.map(p=>({...p,k:'bl',P0:-60,n:2.2,sd:3.5,thr:-94}))];
 const AP_IDX=EM.map((e,i)=>e.k==='ap'?i:-1).filter(i=>i>=0), ALL_IDX=EM.map((e,i)=>i);
 function walls(x0,y0,x1,y1){const L=hyp(x1-x0,y1-y0),n=Math.ceil(L/.35);let prev=1,c=0;for(let i=1;i<=n;i++){const w=isWalk(x0+(x1-x0)*i/n,y0+(y1-y0)*i/n)?1:0;if(prev&&!w)c++;prev=w;}return Math.min(c,4);}

@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import sqlite3
 import threading
+from datetime import datetime, timezone
+from uuid import uuid4
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit
 
@@ -152,10 +154,10 @@ def validate_bundle(bundle):
     if 'description' in venue:
         string(venue['description'], 'venue.description', empty=True)
     m = bundle['map']
-    object_fields(m, ('width', 'height', 'resolution', 'start', 'corridors', 'rooms', 'fountain', 'escalator', 'entrances'), path='map')
+    object_fields(m, ('width', 'height', 'resolution', 'start', 'corridors', 'rooms', 'fountain', 'escalator', 'entrances'), ('trace',), path='map')
     number(m['width'], 'map.width', 4, 300, integer=True)
     number(m['height'], 'map.height', 4, 300, integer=True)
-    require(type(m['resolution']) in (int, float) and m['resolution'] in (.5, 1), 'map.resolution must be 0.5 or 1 metres per cell')
+    require(type(m['resolution']) in (int, float) and m['resolution'] in (.5, 1), 'map.resolution must be 0.5 or 1 grid units per cell')
     w, h = m['width'], m['height']
 
     def point(x, y, path, boundary=False):
@@ -203,6 +205,47 @@ def validate_bundle(bundle):
         object_fields(e, ('x', 'y', 't', 'a'), path=f'map.entrances[{i}]')
         point(e['x'], e['y'], 'map.entrance', True)
         string(e['t'], 'map.entrance.t', 200); string(e['a'], 'map.entrance.a', 20)
+    if 'trace' in m:
+        trace = m['trace']
+        object_fields(trace, ('version', 'floor', 'units', 'origin', 'pixelsPerUnit', 'sourceSize', 'photo', 'routing',
+                              'outline', 'zones', 'points', 'inferredObstacles'), path='map.trace')
+        require(trace['version'] == 'photo-trace-v1' and trace['units'] == 'relative' and
+                trace['routing'] == 'inferred-whitespace', 'Photo traces must explicitly label unmeasured demonstration routing')
+        string(trace['floor'], 'trace.floor', 20)
+        number(trace['pixelsPerUnit'], 'trace.pixelsPerUnit', .01, 1000)
+        for field in ('sourceSize', 'origin'):
+            sequence(trace[field], 'trace.' + field, 2)
+            require(len(trace[field]) == 2, 'Trace coordinates must have two components')
+            for v in trace[field]: number(v, 'trace.' + field, 0, 10000)
+        require(all(v > 0 for v in trace['sourceSize']), 'Photo dimensions must be positive')
+        require(isinstance(trace['photo'], str) and re.fullmatch(r'data/[A-Za-z0-9_/-]+\.(jpg|png)', trace['photo']), 'trace.photo must be a local data image path')
+        def polygon(shape):
+            sequence(shape, 'trace.polygon', 512)
+            require(len(shape) >= 3, 'Polygons require at least three vertices')
+            for vertex in shape:
+                sequence(vertex, 'trace.vertex', 2)
+                require(len(vertex) == 2, 'Vertices require two coordinates')
+                point(*vertex, 'trace.vertex', boundary=True)
+        polygon(trace['outline'])
+        sequence(trace['inferredObstacles'], 'trace.inferredObstacles', 100)
+        for shape in trace['inferredObstacles']: polygon(shape)
+        sequence(trace['zones'], 'trace.zones', 300)
+        zone_ids = set()
+        for zone in trace['zones']:
+            object_fields(zone, ('id', 'tone', 'shape'), path='trace.zone')
+            require(isinstance(zone['id'], str) and IDENTIFIER.fullmatch(zone['id']) and zone['id'] not in zone_ids, 'Trace zone ids must be safe and unique')
+            zone_ids.add(zone['id'])
+            require(zone['tone'] in ('rose', 'amber', 'yellow', 'green', 'cyan', 'blue'), 'Unsupported zone tone')
+            polygon(zone['shape'])
+        sequence(trace['points'], 'trace.points', 300)
+        seen = set()
+        for mark in trace['points']:
+            object_fields(mark, ('id', 'x', 'y', 'zoneId', 'confidence'), path='trace.point')
+            require(isinstance(mark['id'], str) and mark['id'] in room_ids and mark['id'] not in seen, 'Trace points must reference unique POIs')
+            seen.add(mark['id']); point(mark['x'], mark['y'], 'trace.point')
+            require(isinstance(mark['zoneId'], str) and mark['zoneId'] in zone_ids, 'Trace point must reference a zone')
+            require(mark['confidence'] in ('clear', 'review'), 'Trace point confidence must remain explicit')
+        require(seen == room_ids, 'Every photo-derived POI must retain a source point')
     c = bundle['catalog']
     object_fields(c, ('title', 'sub', 'unit', 'cats', 'chips', 'favs', 'sample', 'poi'), ('flow',), path='catalog')
     for key in ('title', 'sub', 'unit'):
@@ -277,16 +320,37 @@ def apply_queues(bundle, queues):
     return bundle
 
 
+def validate_feedback(payload):
+    object_fields(payload, ('topic', 'message'), ('contact',), path='feedback')
+    string(payload['topic'], 'feedback.topic', 30)
+    require(payload['topic'] in ('cooperation', 'suggestion', 'issue'), 'Unsupported feedback topic')
+    string(payload['message'], 'feedback.message', 2000)
+    contact = payload.get('contact', '')
+    string(contact, 'feedback.contact', 200, empty=True)
+    return {'topic': payload['topic'], 'message': payload['message'].strip(), 'contact': contact.strip()}
+
+
 class Store:
     def __init__(self, path):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(str(path), check_same_thread=False)
         self.lock = threading.RLock()
         self.connection.execute('CREATE TABLE IF NOT EXISTS venues (id TEXT PRIMARY KEY, bundle TEXT NOT NULL)')
+        self.connection.execute('CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, topic TEXT NOT NULL, message TEXT NOT NULL, contact TEXT NOT NULL)')
+        self.connection.execute('CREATE TABLE IF NOT EXISTS seed_backups (venue_id TEXT PRIMARY KEY, bundle TEXT NOT NULL, migrated_at TEXT NOT NULL)')
         self.connection.commit()
 
     def close(self):
         with self.lock: self.connection.close()
+
+    def save_feedback(self, payload):
+        feedback = validate_feedback(payload)
+        feedback_id = 'FB-' + uuid4().hex[:12]
+        created_at = datetime.now(timezone.utc).isoformat()
+        with self.lock, self.connection:
+            self.connection.execute('INSERT INTO feedback(id,created_at,topic,message,contact) VALUES(?,?,?,?,?)',
+                                    (feedback_id, created_at, feedback['topic'], feedback['message'], feedback['contact']))
+        return {'feedbackId': feedback_id, 'createdAt': created_at}
 
     def list_venues(self):
         with self.lock:
@@ -329,7 +393,17 @@ class Store:
         require(len({b['venue']['id'] for b in bundles}) == len(bundles), 'Seed venue ids must be unique')
         with self.lock, self.connection:
             for b in bundles:
-                if reset or self.get_bundle(b['venue']['id']) is None:
+                current = self.get_bundle(b['venue']['id'])
+                legacy_path = ROOT / 'examples' / 'yintai-simulated-legacy.json'
+                replace_legacy = False
+                if current and b['venue']['id'] == 'yintai-demo' and b['map'].get('trace') and legacy_path.exists():
+                    legacy = json.loads(legacy_path.read_text(encoding='utf-8'))
+                    replace_legacy = (current['venue']['source'] == 'synthetic' and current['map'] == legacy['map'] and
+                                      current['catalog']['poi'].keys() == legacy['catalog']['poi'].keys())
+                if replace_legacy:
+                    self.connection.execute('INSERT OR IGNORE INTO seed_backups VALUES(?,?,?)',
+                                            (b['venue']['id'], json.dumps(current, ensure_ascii=False), datetime.now(timezone.utc).isoformat()))
+                if reset or current is None or replace_legacy:
                     self._write(apply_queues(b, b['queues']))
         return len(bundles)
 
@@ -414,6 +488,12 @@ class Handler(BaseHTTPRequestHandler):
         store = self.server.store
         if path == '/api/v1/health' and method == 'GET':
             return self.respond(200, {'status': 'ok', 'apiVersion': 1, 'storage': 'sqlite', 'localOnly': True})
+        if path == '/api/v1/feedback':
+            if method != 'POST':
+                return self.error(405, 'method_not_allowed', 'Feedback only supports POST')
+            payload = self.read_json()
+            if payload is None: return
+            return self.respond(201, store.save_feedback(payload))
         if path == '/api/v1/venues' and method == 'GET':
             return self.respond(200, {'venues': store.list_venues()})
         if path == '/api/v1/nearby-venues' and method == 'GET':

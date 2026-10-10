@@ -22,21 +22,19 @@ $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');i
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;ui.filter=b.dataset.f;document.querySelectorAll('#chips .fchip').forEach(x=>x.setAttribute('aria-pressed',x===b));ui.tab='near';ui.detail=null;ui.dirty=true;});
 $('#q').addEventListener('input',e=>{ui.q=e.target.value;ui.tab='near';ui.detail=null;ui.dirty=true;});
 $('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){const b=$('#pbody .poi');if(b)b.click();}});
-$('#venueSeg').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;location.href='demo.html?venue='+b.dataset.v;});
+$('#venueSeg').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;location.href='demo.html?venue='+(b.dataset.v==='mall'?'yintai-demo':b.dataset.v);});
 $('#srcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-src]');if(!b)return;sim.src=b.dataset.src;document.querySelectorAll('#srcSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));sim.stats={gps:[],fp:[],pdr:[],ekf:[]};
   toast(sim.src==='fused'?'已加入楼里信标：每秒一次观测，误差统计已重置':'仅使用商场现有 WiFi：每 2 秒一次观测，误差统计已重置');});
 $('#spdSeg').addEventListener('click',e=>{const b=e.target.closest('[data-spd]');if(!b)return;sim.speed=+b.dataset.spd;document.querySelectorAll('#spdSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
 document.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>{const k=b.dataset.layer;layers[k]=!layers[k];b.setAttribute('aria-pressed',layers[k]);});
-$('#pauseBtn').onclick=()=>{sim.paused=!sim.paused;$('#pauseBtn').textContent=sim.paused?'继续':'暂停';};
+$('#pauseBtn').onclick=()=>{sim.paused=!sim.paused;window.LouliSession.paintPlayback($('#pauseBtn'),!sim.paused,{playing:'暂停',paused:'继续'});};
 $('#resetBtn').onclick=()=>{sim.stats={gps:[],fp:[],pdr:[],ekf:[]};sim.hist=[];sim.pdr={x:sim.truth.x,y:sim.truth.y,h:sim.lastStep.h};sim.trail={truth:[],pdr:[],ekf:[]};toast('统计已重置，纯惯导从当前真实位置重新起算');};
 $('#zin').onclick=()=>{const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,view.s*1.35);};
 $('#zout').onclick=()=>{const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,view.s/1.35);};
 $('#locate').onclick=()=>{follow=true;if(view.s<7){const a=mapArea();zoomAt((a.l+a.r)/2,(a.t+a.b)/2,8);}};
-const openAbout=()=>{$('#about').hidden=false;};$('#aboutBtn').onclick=openAbout;$('#aboutFab').onclick=openAbout;$('#aboutClose').onclick=()=>$('#about').hidden=true;
 $('#conClose').onclick=()=>{if(isMob())$('#console').classList.remove('open');else{$('#console').hidden=true;$('#conPill').style.display='flex';}};
 $('#conPill').onclick=()=>{if(isMob())$('#console').classList.toggle('open');else{$('#console').hidden=false;$('#conPill').style.display='';}};
 $('#handle').onclick=()=>$('#panel').classList.toggle('collapsed');
-addEventListener('keydown',e=>{if(e.key==='Escape')$('#about').hidden=true;});
 function focusOn(x,y){const a=mapArea();if(view.s<7)zoomAt((a.l+a.r)/2,(a.t+a.b)/2,7.5);follow=false;focusT={x,y,k:0};}
 let focusT=null;
 
@@ -50,5 +48,10 @@ cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pv=
 const up=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)cv.classList.remove('dragging');if(!moved&&e.type==='pointerup')tap(e.offsetX,e.offsetY);};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,view.s*Math.exp(-e.deltaY*.0015));focusT=null;},{passive:false});
-function tap(px,py){const x=(px-view.ox)/view.s,y=(py-view.oy)/view.s;const sl=SLOTS.find(s=>x>=s.x0&&x<=s.x1&&y>=s.y0&&y<=s.y1);
-  if(sl){ui.detail=sl.id;selId=sl.id;ui.dirty=true;if(isMob())$('#panel').classList.remove('collapsed');}}
+function tap(px,py){const x=(px-view.ox)/view.s,y=(py-view.oy)/view.s;
+  let sl;
+  if(TRACE){
+    sl=SLOTS.find(s=>hyp(s.cx-x,s.cy-y)*view.s<18);
+    if(!sl){const zone=TRACE.zones.find(z=>pointInPolygon(x,y,z.shape));const marks=TRACE.points.filter(p=>p.zoneId===zone?.id).sort((a,b)=>hyp(a.x-x,a.y-y)-hyp(b.x-x,b.y-y));sl=SL[marks[0]?.id];}
+  }else sl=SLOTS.find(s=>x>=s.x0&&x<=s.x1&&y>=s.y0&&y<=s.y1);
+  if(sl){ui.detail=sl.id;selId=sl.id;ui.dirty=true;if(window.LouliSession.embed)parent.postMessage({type:'louli-map-selected',id:sl.id},location.origin);if(isMob())$('#panel').classList.remove('collapsed');}}

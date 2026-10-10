@@ -1,5 +1,6 @@
 /* ============ rendering: panel ============ */
-const fmtD=m=>m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
+const relativeDistance=()=>typeof TRACE!=='undefined'&&!!TRACE;
+const fmtD=m=>relativeDistance()?`${Math.round(m)} 图上单位`:m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
 const fmtMin=m=>m<1?'不到 1 分钟':m<60?`${Math.round(m)} 分钟`:`${Math.floor(m/60)} 小时 ${Math.round(m%60)} 分`;
 const clock=m=>{const d=new Date(Date.now()+m*60000);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
 function qChip(id){const q=Q[id];if(!q)return '';const cls=q.n>4?'warn':'ok';return `<span class="qchip ${cls}" data-live="q:${id}">${q.n>0?`等 ${q.n} ${esc(q.unit)}`:'无需等位'}</span>`;}
@@ -8,7 +9,7 @@ function poiRow(p){const meta=[esc(p.s)];if(p.r)meta.push(`<span class="star">�
 function nearHTML(){const qq=ui.q.trim();let items=Object.keys(V.poi).map(P).filter(p=>(ui.filter==='all'||p.c===ui.filter)&&(!qq||(p.n+p.s+(p.tags||[]).join('')+(p.menu||[]).join('')+catOf(p)[0]).toLowerCase().includes(qq.toLowerCase())));
   items.sort((a,b)=>walkMeters(a.id)-walkMeters(b.id));
   if(!items.length)return `<div class="empty">没有找到「${esc(qq)}」<br>试试“火锅”“咖啡”“卫生间”</div>`;
-  return `<div class="sect-h">${qq?'搜索结果':'离你最近'}<span class="muted">按实际步行距离排序</span></div>`+items.map(poiRow).join('');}
+  return `<div class="sect-h">${qq?'搜索结果':'离你最近'}<span class="muted">${relativeDistance()?'按演示路径排序':'按实际步行距离排序'}</span></div>`+items.map(poiRow).join('');}
 function detailHTML(id){const p=P(id);const isFav=favs.includes(id);const t=tickets.find(t=>t.poi===id&&t.status!=='done');const q=Q[id];
   const meta=[];if(p.r)meta.push(`<span><span class="star">★★★★★</span> ${p.r}</span>`);if(p.p)meta.push(`<span>¥${p.p}/人</span>`);meta.push(`<span>${esc(p.s)}</span>`);
   meta.push(`<span>步行 <b data-live="d:${id}">${fmtD(walkMeters(id))}</b> · <span data-live="w:${id}">${fmtMin(walkMeters(id)/1.1/60)}</span></span>`);
@@ -25,7 +26,7 @@ function detailHTML(id){const p=P(id);const isFav=favs.includes(id);const t=tick
   if(p.docs)h+=`<div class="sect-h">今日坐诊</div><div class="menu">${p.docs.map(m=>`<span>${esc(m)}</span>`).join('')}</div>`;
   if(p.info&&p.info.length)h+=`<div class="sect-h">就诊须知</div>`+p.info.map(x=>`<div class="rev"><p>${esc(x)}</p></div>`).join('');
   if(p.rev)h+=`<div class="sect-h">评价<span class="muted">示例数据</span></div>`+p.rev.map(([u,x])=>`<div class="rev"><span class="ava">${esc(u[0])}</span><p><b>${esc(u)}</b>${esc(x)}</p></div>`).join('');
-  return h+`<div class="note">店铺、评价、团购均为演示数据。正式版通过开放平台接入真实商户信息。</div>`;}
+  return h+`<div class="note">${relativeDistance()?'店名与轮廓来自导览照片；通路、接近点和队列为演示，未测量实际距离。':'店铺、评价、团购均为演示数据。正式版通过开放平台接入真实商户信息。'}</div>`;}
 function planHTML(){let h='';
   if(vKey==='hosp'&&V.flow){const f=V.flow;h+=`<div class="sect-h">今日就诊流程<span class="muted">示例流程，未连接挂号系统</span></div><div class="flow"><b style="font-size:13.5px">模拟就诊任务</b><ol>${f.phases.map((ph,i)=>`<li>${esc(f.labels[i])}：${ph.map(id=>esc(V.poi[id].n)).join('、')}${ph.length>1?'<span class="opt">顺序自动优化</span>':''}</li>`).join('')}</ol></div>
     <button class="btn primary block" data-act="hospplan">规划就诊路线</button>`;}
@@ -48,10 +49,10 @@ function queueHTML(){const act=tickets.filter(t=>t.status!=='done');let h=`<div 
   if(!act.length)h+=`<div class="empty">还没有排号。在${vKey==='mall'?'餐厅':'科室'}详情里点“取号”，可以先去别处，快轮到时会提醒你。</div>`;else h+=act.map(ticketHTML).join('');
   return h+`<div class="note">提醒时间按“你离店的步行时间 + 前面${vKey==='mall'?'桌数':'人数'} × 每${vKey==='mall'?'桌':'人'}用时”计算。离得越远，提醒越早。</div>`;}
 function navHTML(){const dest=P(nav.legs[nav.i]);
-  return `<div class="navsum"><div class="big num"><span data-live="nr">–</span><small>米</small></div><div class="big num"><span data-live="ne">–</span><small>分钟</small></div></div>
+  return `<div class="navsum"><div class="big num"><span data-live="nr">–</span><small>${relativeDistance()?'图上单位':'米'}</small></div><div class="big num"><span data-live="ne">–</span><small>${relativeDistance()?'演示分钟':'分钟'}</small></div></div>
   <div class="sect-h" style="padding-top:2px">正在前往「${esc(dest.n)}」</div>
   <div class="legs">${nav.legs.map((id,i)=>`<div class="leg ${i<nav.i?'done':i===nav.i?'cur':''}"><span class="sn">${i+1}</span>${esc(V.poi[id].n)}${i<nav.i?' · 已到达':''}</div>`).join('')}</div>
-  <button class="btn block" data-act="endnav">结束导航</button><div class="note">导航时蓝点会吸附到路线上，偏离超过 6 米自动重新规划。</div>`;}
+  <button class="btn block" data-act="endnav">结束导航</button><div class="note">${relativeDistance()?'路线沿照片留白生成，仅演示单层指引；未核实实际店门与通路。':'导航时蓝点会吸附到路线上，偏离超过 6 米自动重新规划。'}</div>`;}
 function renderTabs(){const n=tickets.filter(t=>t.status!=='done').length;const tabs=[['near','附近'],['plan',vKey==='mall'?'清单':'就诊'],['queue','排队']];if(nav.active)tabs.unshift(['nav','导航中']);
   $('#tabs').innerHTML=tabs.map(([k,l])=>`<button class="tab ${k==='nav'?'navtab':''}" role="tab" data-tab="${k}" aria-selected="${ui.tab===k&&!ui.detail}">${l}${k==='queue'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('');}
 function renderPanel(){renderTabs();const b=$('#pbody');

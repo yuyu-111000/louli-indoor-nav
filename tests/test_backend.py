@@ -29,6 +29,42 @@ class ValidationTests(unittest.TestCase):
     def setUp(self):
         self.assertIsNotNone(server, 'backend/server.py must implement the requested service')
 
+    def test_photo_trace_import_retains_uncertainty_and_rejects_invalid_geometry(self):
+        b = json.loads((SERVER.parents[1] / 'data' / 'yintai-demo.json').read_text(encoding='utf-8'))
+        self.assertEqual(server.validate_bundle(b)['map']['trace']['units'], 'relative')
+        mutations = [lambda b: b['map']['trace'].update(units='metres'),
+                     lambda b: b['map']['trace']['zones'][0]['shape'][0].__setitem__(0, 999),
+                     lambda b: b['map']['trace']['points'][0].update(zoneId='missing'),
+                     lambda b: b['map']['trace'].update(photo='../../secret.jpg'),
+                     lambda b: b['map']['trace']['points'].append(copy.deepcopy(b['map']['trace']['points'][0]))]
+        for mutate in mutations:
+            bad = copy.deepcopy(b); mutate(bad)
+            with self.assertRaises(server.ValidationError): server.validate_bundle(bad)
+
+    def test_single_floor_seed_migration_backs_up_legacy_and_preserves_custom_data(self):
+        root = SERVER.parents[1]
+        legacy = json.loads((root / 'examples/yintai-simulated-legacy.json').read_text(encoding='utf-8'))
+        with tempfile.TemporaryDirectory() as directory:
+            store = server.Store(Path(directory) / 'migration.sqlite')
+            try:
+                legacy['queues'][0]['ahead'] = 77
+                store.upsert(legacy)
+                other = fixture(); store.upsert(other)
+                store.save_feedback({'topic':'suggestion','message':'保留反馈'})
+                store.seed(root / 'data')
+                migrated = store.get_bundle('yintai-demo')
+                self.assertEqual(migrated['map']['trace']['floor'], '1F')
+                backup = json.loads(store.connection.execute('SELECT bundle FROM seed_backups WHERE venue_id=?', ('yintai-demo',)).fetchone()[0])
+                self.assertEqual(backup['queues'][0]['ahead'],77)
+                self.assertEqual(store.get_bundle('test-hospital')['map'],other['map'])
+                self.assertEqual(store.connection.execute('SELECT count(*) FROM feedback').fetchone()[0],1)
+                migrated['queues'][0]['ahead'] = 42; store.upsert(migrated); store.seed(root / 'data')
+                self.assertEqual(store.get_bundle('yintai-demo')['queues'][0]['ahead'],42)
+                custom = copy.deepcopy(legacy); custom['venue']['source'] = 'user-provided'; store.upsert(custom)
+                store.seed(root / 'data')
+                self.assertNotIn('trace',store.get_bundle('yintai-demo')['map'])
+            finally: store.close()
+
     def test_accepts_location_with_explicit_simulated_indoor_status(self):
         b = fixture()
         b['venue']['indoorStatus'] = 'demo_simulated'
@@ -121,12 +157,13 @@ class ServiceTests(unittest.TestCase):
         (context / 'nearby-venues.json').write_bytes((source / 'context' / 'nearby-venues.json').read_bytes())
         status, data = self.request('/api/v1/nearby-venues')
         self.assertEqual(status, 200); self.assertEqual(len(data['venues']), 6)
-        mall = json.loads((source / 'yintai-demo.json').read_text())
+        mall = json.loads((source / 'yintai-demo.json').read_text(encoding='utf-8'))
         status, _ = self.request('/api/v1/imports', 'POST', mall)
         self.assertEqual(status, 201)
         status, saved = self.request('/api/v1/venues/yintai-demo/bundle')
         self.assertEqual(saved['venue']['location'], mall['venue']['location'])
-        self.assertEqual(saved['venue']['indoorStatus'], 'demo_simulated')
+        self.assertEqual(saved['venue']['indoorStatus'], 'user_provided')
+        self.assertEqual(saved['map']['trace'], mall['map']['trace'])
         (context / 'nearby-venues.json').write_text('{}')
         status, _ = self.request('/api/v1/nearby-venues')
         self.assertEqual(status, 422)
@@ -158,6 +195,30 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(self.request('/')[1], '<h1>Louli</h1>')
         self.assertEqual(self.request('/api/v1/venues/unknown/bundle')[0], 404)
 
+    def test_feedback_is_saved_and_survives_reopen_and_venue_reset(self):
+        payload = {'topic': 'cooperation', 'message': "  测试反馈：希望了解路线方案 ' <b>文本</b>  ", 'contact': '  test@example.invalid  '}
+        status, saved = self.request('/api/v1/feedback', 'POST', payload)
+        self.assertEqual(status, 201)
+        self.assertRegex(saved['feedbackId'], r'^FB-[0-9a-f]{12}$')
+        self.assertTrue(saved['createdAt'].endswith('+00:00'))
+        self.assertEqual(self.request('/api/v1/reset', 'POST', {})[0], 200)
+        reopened = server.Store(self.db)
+        row = reopened.connection.execute('SELECT topic,message,contact FROM feedback WHERE id=?', (saved['feedbackId'],)).fetchone()
+        reopened.close()
+        self.assertEqual(row, (payload['topic'], payload['message'].strip(), payload['contact'].strip()))
+        self.assertEqual(set(saved), {'feedbackId', 'createdAt'})
+        self.assertEqual(self.request('/api/v1/feedback')[0], 405)
+
+    def test_feedback_optional_contact_and_rejected_messages_do_not_write(self):
+        valid = {'topic': 'suggestion', 'message': '测试建议'}
+        self.assertEqual(self.request('/api/v1/feedback', 'POST', valid)[0], 201)
+        for bad in [dict(valid, message='  \n '), dict(valid, message='x' * 2001), dict(valid, topic=[]),
+                    dict(valid, contact='x' * 201), dict(valid, topic='unknown'), dict(valid, message=5),
+                    dict(valid, message='\ud800'), dict(valid, extra='unexpected')]:
+            self.assertEqual(self.request('/api/v1/feedback', 'POST', bad)[0], 422)
+        self.assertEqual(self.httpd.store.connection.execute('SELECT COUNT(*) FROM feedback').fetchone()[0], 1)
+        self.assertEqual(self.httpd.store.connection.execute('SELECT contact FROM feedback').fetchone()[0], '')
+
     def test_queue_update_persists_and_invalid_update_is_atomic(self):
         q = [{'poiId': 'room1', 'ahead': 8, 'minutesPerPerson': 2.5, 'unit': '人'}]
         self.assertEqual(self.request('/api/v1/venues/test-hospital/queues', 'PUT', {'queues': q})[0], 200)
@@ -184,7 +245,13 @@ class ServiceTests(unittest.TestCase):
         for path in ['/../secret.txt', '/%2e%2e/secret.txt', '/backend/server.py', '/api/v2/venues']:
             with self.subTest(path=path):
                 self.assertEqual(self.request(path)[0], 404)
-        (self.root / 'frontend' / 'link.txt').symlink_to(self.root / 'secret.txt')
+    def test_static_symlink_escape_is_rejected(self):
+        try:
+            (self.root / 'frontend' / 'link.txt').symlink_to(self.root / 'secret.txt')
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Windows account cannot create symbolic links')
+            raise
         self.assertEqual(self.request('/link.txt')[0], 404)
 
     def test_invalid_seed_reset_preserves_all_existing_data(self):

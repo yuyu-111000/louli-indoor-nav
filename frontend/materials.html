@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楼里 · 资料与反馈</title><link rel="stylesheet" href="styles/showcase.css"><link rel="stylesheet" href="styles/typography.css"><link rel="stylesheet" href="styles/brand-logo.css"><link rel="stylesheet" href="styles/site-nav.css"><link rel="stylesheet" href="styles/information.css"></head><body>
+<header class="site-header"><a class="brand louli-brand" href="./" aria-label="楼里首页"><span class="brand-logo" aria-hidden="true"></span><span class="brand-name">LOULI</span></a><div class="site-nav-slot" data-site-nav></div></header>
+<main class="information-main">
+  <div class="information-intro"><div class="eyebrow">MAP DATA & FEEDBACK</div><h1>资料与反馈</h1><p>查看城西银泰 1F 实际导览图，留下你的想法。</p></div>
+  <div class="information-columns">
+    <section aria-labelledby="documentsTitle"><h2 id="documentsTitle">城西银泰 · 1F 资料</h2>
+      <div class="document-list">
+        <a class="document-card document-card-photo" href="data/yintai-kiosk/photos/1F.jpg" target="_blank" rel="noopener"><span class="document-number">01</span><span>1F 实际导览图</span><small>原图 ↗</small><img src="data/yintai-kiosk/photos/1F.jpg" alt="城西银泰1F导览屏原始照片" width="1706" height="1279"></a>
+        <a class="document-card" href="spatial-map.html?venue=yintai-demo"><span class="document-number">02</span><span>1F 铺位地图</span><small>查看 ↗</small></a>
+        <a class="document-card" href="data/yintai-kiosk/1F-shops.json" download="yintai-1F-shops.json"><span class="document-number">03</span><span>1F 店铺记录</span><small>JSON ↓</small></a>
+        <a class="document-card" href="data/yintai-kiosk/kiosk-map.json" download="yintai-1F-map.json"><span class="document-number">04</span><span>1F 轮廓与坐标</span><small>JSON ↓</small></a>
+      </div>
+    </section>
+    <section class="feedback-panel" aria-labelledby="feedbackTitle"><h2 id="feedbackTitle">说说你的想法</h2><p>合作沟通、体验建议，或遇到的问题。</p>
+      <form id="feedbackForm">
+        <label for="feedbackTopic">反馈类型</label><select id="feedbackTopic" name="topic"><option value="cooperation">合作沟通</option><option value="suggestion">体验建议</option><option value="issue">问题报告</option></select>
+        <label for="feedbackMessage">反馈内容 <span class="field-count" id="messageCount">0 / 2000</span></label><textarea id="feedbackMessage" name="message" rows="5" maxlength="2000" placeholder="有哪些想法想与我们分享？" required></textarea>
+        <label for="feedbackContact">联系方式 <span class="field-optional">选填</span></label><input id="feedbackContact" name="contact" type="text" maxlength="200" placeholder="邮箱、微信或其他联系方式" autocomplete="off">
+        <button class="feedback-submit" type="submit">提交反馈 <span aria-hidden="true">↗</span></button>
+        <p class="feedback-note">反馈保存在当前本地演示服务中。</p><p id="feedbackStatus" class="feedback-status" role="status"></p>
+      </form>
+    </section>
+  </div>
+</main><script type="module" src="js/materials.js"></script><script type="module" src="js/site-nav.js"></script><script type="module" src="js/click-spark.js"></script></body></html>

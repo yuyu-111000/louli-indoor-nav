@@ -13,3 +13,5 @@
 }
 @media(max-width:380px){.site-header nav.jelly-nav{gap:4px;padding:10px 8px}.site-header nav.jelly-nav > :is(a,button){padding:0 8px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.site-header nav.jelly-nav > :is(a,button){transition:none;transform:none!important}}
+
+@media(max-width:700px){.site-header nav.jelly-nav{flex-wrap:wrap;gap:8px}.site-header nav.jelly-nav > :is(a,button){flex:0 0 calc((100% - 16px)/3)}}

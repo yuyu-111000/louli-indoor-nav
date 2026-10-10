@@ -1,0 +1,55 @@
+﻿floor,shop_id,name,zone_id,x,y,confidence
+B1,B1-S01,KK桌球俱乐部,B1-Z16,260,407,clear
+B1,B1-S02,阿香米线,B1-Z18,554,372,review
+B1,B1-S03,一休家饭团,B1-Z18,583,473,review
+B1,B1-S04,CoCo都可,B1-Z26,631,519,clear
+B1,B1-S05,麻辣烫,B1-Z18,513,500,review
+B1,B1-S06,湘太煲,B1-Z26,551,569,review
+B1,B1-S07,头牌小串,B1-Z26,629,744,clear
+B1,B1-S08,KFC,B1-Z26,777,659,clear
+B1,B1-S09,老娘舅,B1-Z29,785,758,review
+B1,B1-S10,屈臣氏,B1-Z28,888,755,clear
+B1,B1-S11,乡村基,B1-Z29,739,831,clear
+B1,B1-S12,海底捞,B1-Z31,591,982,clear
+B1,B1-S13,Speed Zoo,B1-Z20,1086,431,review
+1F,1F-S01,迪卡侬,1F-Z17,305,505,clear
+1F,1F-S02,星巴克,1F-Z04,719,322,review
+1F,1F-S03,M Stand,1F-Z22,1420,620,clear
+1F,1F-S04,adidas,1F-Z26,1120,700,clear
+1F,1F-S05,荣耀,1F-Z22,1397,568,clear
+1F,1F-S06,奈雪的茶,1F-Z28,579,713,review
+1F,1F-S07,必胜客,1F-Z31,1289,988,clear
+1F,1F-S08,星巴克,1F-Z30,1460,901,clear
+1F,1F-S09,麦高卡牌,1F-Z15,1139,476,review
+1F,1F-S10,茶百道,1F-Z02,1295,280,review
+2F,2F-S01,GAPDAY健身,2F-Z07,130,404,clear
+2F,2F-S02,XPLAYING,2F-Z08,322,480,clear
+2F,2F-S03,海伦司,2F-Z14,259,590,clear
+2F,2F-S04,网鱼电竞,2F-Z17,491,652,clear
+2F,2F-S05,ROCOCO,2F-Z09,742,477,clear
+2F,2F-S06,尚品宅配,2F-Z12,1183,571,clear
+2F,2F-S07,adidas,2F-Z12,1040,653,clear
+2F,2F-S08,NIKE,2F-Z20,1159,832,clear
+2F,2F-S09,星巴克,2F-Z21,1397,889,clear
+2F,2F-S10,依灵瑜伽,2F-Z18,1381,819,review
+2F,2F-S11,Motara & Cholle,2F-Z12,1017,458,review
+3F,3F-S01,宏优体育,3F-Z12,396,388,clear
+3F,3F-S02,博纳影院,3F-Z12,373,600,clear
+3F,3F-S03,7.PLAB,3F-Z04,954,323,clear
+3F,3F-S04,东方音乐梦工厂,3F-Z05,1125,332,clear
+3F,3F-S05,乐之堡儿童乐园,3F-Z13,1028,457,clear
+3F,3F-S06,青小豆自然探索乐园,3F-Z13,1055,590,clear
+3F,3F-S07,积木公园,3F-Z28,1185,800,clear
+3F,3F-S08,MONICA BOX,3F-Z23,1212,666,clear
+3F,3F-S09,忆花轮,3F-Z13,1172,546,review
+3F,3F-S10,格莱蜜厨,3F-Z21,1398,633,review
+4F,4F-S01,宏优体育,4F-Z05,330,504,clear
+4F,4F-S02,悦动健身,4F-Z04,858,609,clear
+4F,4F-S03,炉鱼,4F-Z02,917,332,clear
+4F,4F-S04,外婆家,4F-Z03,1232,327,clear
+4F,4F-S05,阿田大虾,4F-Z03,1355,362,clear
+4F,4F-S06,新发现,4F-Z04,1135,497,clear
+4F,4F-S07,LINLEE 柠檬茶,4F-Z03,1320,515,clear
+4F,4F-S08,七欣天,4F-Z06,1375,627,clear
+4F,4F-S09,牛老三,4F-Z09,1165,842,review
+4F,4F-S10,许府牛,4F-Z04,1049,469,review

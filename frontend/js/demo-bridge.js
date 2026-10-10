@@ -1,8 +1,9 @@
 // The simulation scripts share a page scope; only this small facade is public.
-const sourceLabel=window.LouliSession.bundle.venue.location?'真实室外地点 · 室内示意图':window.LouliSession.bundle.venue.source==='synthetic'?'虚构场馆':'用户提供的场馆数据';
+const sourceLabel=TRACE?'1F 导览照片数据 · 通路与定位演示':window.LouliSession.bundle.venue.location?'真实室外地点 · 室内示意图':window.LouliSession.bundle.venue.source==='synthetic'?'虚构场馆':'用户提供的场馆数据';
 const mapStatus=document.createElement('div');mapStatus.className='map-status';
 mapStatus.textContent=`仿真位置 · ${sourceLabel} · ${window.LouliSession.connected?'接口已连接':'本地演示数据'}`;
 document.querySelector('#app').append(mapStatus);
+if(TRACE){document.querySelector('.eNow small').textContent=' 图上单位';const pill=$('#conPill');pill.lastChild.textContent=' 图上单位';document.querySelector('.con-sub').textContent='模拟误差 · 照片未标定比例';}
 document.querySelector('#roamChk').checked=false;
 sim.src='fused';sim.speed=4;
 document.querySelectorAll('[data-layer]').forEach(b=>b.setAttribute('aria-pressed',layers[b.dataset.layer]));
@@ -26,8 +27,9 @@ function syncQueueRows(rows){
 }
 window.LouliDemo={
   bundle:window.LouliSession.bundle,
+  select(id){if(!SL[id])return;selId=id;ui.detail=id;ui.dirty=true;drawMap(performance.now());},
   reset(){endNav(true);$('#toast').hidden=true;clearTimeout(toastTimer);sim.paused=false;resetSim();doScan();initVenue(vKey);ui.tab='plan';layers.nodes=false;resize();fit();follow=false;},
-  pause(value){sim.paused=value;},
+  pause(value){sim.paused=value;window.LouliSession.paintPlayback($('#pauseBtn'),!value,{playing:'暂停',paused:'继续'});},
   chapter(action,ids){
     endNav(true);$('#toast').hidden=true;clearTimeout(toastTimer);layers.nodes=action==='hardware';ui.plan=null;follow=false;
     if(action==='overview'){ui.tab='plan';sim.speed=4;fit();}
@@ -38,13 +40,14 @@ window.LouliDemo={
       sim.speed=6;fit();follow=false;
     }
     if(action==='queue'){ui.tab='queue';const id=ids[0];takeTicket(id,true);const t=tickets.find(t=>t.poi===id);if(t){t.ahead=1;t.status='soon';}toast(`模拟提醒：快轮到「${P(id).n}」了，可以准备返回`);}
-    if(action==='hardware'){ui.tab='near';fit();}
-    ui.dirty=true;renderPanel();updateBanner();
+    if(action==='hardware'){ui.tab='near';}
+    ui.dirty=true;renderPanel();updateBanner();resize();drawMap(performance.now());
   },
   updateQueues:syncQueueRows,
   setConnection(connected){window.LouliSession.connected=connected;mapStatus.textContent=`仿真位置 · ${sourceLabel} · ${connected?'接口已连接':'接口暂不可用，保留最近数据'}`;},
-  snapshot(){return {time:sim.t,position:{...disp},truth:{...sim.truth},navigation:nav.active,destination:nav.legs[nav.i],venue:window.LouliSession.bundle.venue.id,queues:Q};}
+  snapshot(){return {time:sim.t,position:{...disp},truth:{...sim.truth},navigation:nav.active,destination:nav.legs[nav.i],venue:window.LouliSession.bundle.venue.id,queues:Q,beacons:layers.nodes?BCN.map(b=>({...b})):[]};}
 };
-if(window.LouliSession.bundle.venue.location){const floor=document.querySelector('.floor');if(floor){floor.textContent='示意';floor.setAttribute('aria-label','示意楼层，非真实楼层图');}}
+if(window.LouliSession.bundle.venue.location){const floor=document.querySelector('.floor');if(floor){floor.textContent=TRACE?'1F':'示意';floor.setAttribute('aria-label',TRACE?'城西银泰1F照片轮廓':'示意楼层，非真实楼层图');}}
 window.LouliDemo.reset();
+window.LouliDemo.pause(sim.paused);
 window.dispatchEvent(new Event('louli-ready'));

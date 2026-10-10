@@ -1,7 +1,7 @@
 import {listVenues,loadVenue,importBundle,readQueues,writeQueues,request} from './api.js';
 import {enhanceSelects} from './glide-select.js';
 enhanceSelects();
-const $=s=>document.querySelector(s);let current=new URLSearchParams(location.search).get('venue')||'hosp',downloadURL;
+const $=s=>document.querySelector(s);let current=new URLSearchParams(location.search).get('venue')||'yintai-demo',downloadURL;
 function result(id,message,error=false){const p=$(id);p.textContent=message;p.className=error?'error':'success';}
 async function refresh(selected=current){const {venues}=await listVenues();$('#venueSelect').replaceChildren(...venues.map(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.name;o.selected=v.id===selected;return o;}));current=$('#venueSelect').value;await choose();}
 async function choose(){current=$('#venueSelect').value;$('#openVenue').href=`./?venue=${encodeURIComponent(current)}`;const data=await readQueues(current);$('#queueText').value=JSON.stringify(data,null,2);const {bundle}=await loadVenue(current);if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL=URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));$('#downloadVenue').href=downloadURL;$('#downloadVenue').download=`${current}.json`;}

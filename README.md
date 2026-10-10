@@ -1,24 +1,25 @@
 # 楼里 · 产品展示与数据接口
 
-医院与商场各有四段展示。城西银泰默认先显示导览屏照片提取的 B1—4F 立体店铺图；可进入平面图搜索和点选店铺，并对照原照片。下一章节进入原有仿真路线、模拟排队返回提醒和信标概念。西溪印象城仍可逐层查看公开截图。首页适合给队友或合作方讲解；独立仿真页保留搜索、地点详情、多点规划和定位方法仿真；“演示数据”支持导入、下载场馆包与修改模拟队列。
+医院与商场各有四段展示。默认打开城西银泰 **1F 导览照片地图**，保留资料中的31个铺位轮廓和10条店名。选店、带路、候位和定位四步共用这张单层图，保留暂停、重置与橙色信标动画。“路线仿真”保留搜索、地点详情、多点规划和定位方法演示；“演示数据”支持导入、下载场馆包与修改模拟队列。
 
 ## 附近场馆展示
 
-默认展示 **杭州城西银泰城**，用户提供的室外锚点距紫金港约1.55公里（直线），是两家商场中较近的一家。商场第一章使用用户新提供的五层导览屏照片，提取 123 个近似色块区域和 54 条店名记录，生成可点击的 [立体/平面空间图](frontend/spatial-map.html)。先前的 [公开逐层截图查看页](frontend/reference-map.html?venue=yintai-demo) 仍保留，可核对另一来源的图。附近场馆目录收录两家商场和四个医院院区；医院目前仅展示地点资料。
+主界面地图上方提供“当前场馆”选择框，可切换医院、示例购物中心、西溪印象城、城西银泰及导入场馆，沿用其它选择框的展开与高亮动画。原有场景按钮和各子页选择框保留。
 
-真实地址和室外坐标来自用户提供的地图研究资料，未重新实地核验。新图的轮廓来自照片色块，并非 CAD 或实测建筑图；相邻同色铺位可能合并。54 条店名中 16 条标记待核实，未识别的铺位保留轮廓但不猜店名。图上位置不是店门或通道坐标。路线章节的室内几何、设施、店铺与队列仍为仿真，地图尺度和路线距离不是实际场馆测量。提取方法与清单见 [导览屏照片提取说明](docs/kiosk-map-digitization.md)。
+默认展示 **杭州城西银泰城**，用户提供的室外锚点距紫金港约1.55公里（直线）。本轮采用 `城西银泰3D地图数据/` 中的1F资料；“逐层看图”进入独立的1F轮廓查看页，可以搜索店名并对照原始照片。其余楼层暂未接入导航。“附近场馆”仍可切换西溪印象城或查看医院地点资料；旧百度公开截图在独立查看页中保留。
+
+1F轮廓、店名及相对位置来自小组提供的导览屏照片提取稿。10条店名中4条仍标记为待核对；同名星巴克保留各自独立编号。照片未标定实际尺度，也未记录店门、通道拓扑或跨层连接。路线在照片留白中推定并避开铺位轮廓，终点是演示接近点；候位和定位继续使用模拟数据，距离显示“图上单位”。完整适配与迁移说明见 [单层地图说明](docs/yintai-single-floor.md)。
 
 ## 展示材料
 
-- [城西银泰五层立体展示 GIF](materials/media/yintai-spatial-demo.gif)、[立体总览截图](materials/media/yintai-spatial-stack.png)、[3F 店铺图](materials/media/yintai-spatial-3f.png)
-- [上一版公开楼层截图 GIF](materials/media/yintai-public-floor.gif)、[F1 截图](materials/media/yintai-public-floor.png)：作为另一套来源保留。
+- [城西银泰公开楼层展示 GIF](materials/media/yintai-public-floor.gif)、[F1 展示截图](materials/media/yintai-public-floor.png)、[商户点选截图](materials/media/yintai-public-selected.png)、[F2 覆盖情况截图](materials/media/yintai-f2-coverage.png)
 - [原仿真四章节 GIF](materials/media/yintai-demo.gif)：这是公开楼层截图接入前的录屏，仅作历史演示参考。
 - [医院功能 GIF](materials/media/hospital-demo.gif) / [商场功能 GIF](materials/media/mall-demo.gif)
 - [硬件设计 PDF](materials/hardware/hardware-design.pdf)、[BOM](materials/hardware/BOM.csv)、[概念图](materials/hardware/concept.png)、[爆炸图](materials/hardware/exploded.png)
 - [简版商业计划 PDF](materials/business/louli-business-plan.pdf)、[商业调研与访谈 PDF](materials/business/louli-commercial-research.pdf)
 - PDF旁附可编辑LaTeX源稿。早期概念讨论稿在 `materials/archive/`，本轮状态以本README和验收记录为准。
 
-![城西银泰五层立体展示](materials/media/yintai-spatial-demo.gif)
+上列公开截图和GIF记录早期版本，当前默认图以1F照片数据及下述验收为准。
 
 原单文件演示保留在 [demo/index.html](demo/index.html)，旧商业报告在 [report/index.html](report/index.html)；原README保留为 [历史说明](docs/legacy-readme.md)，其中旧参数与测算不能视为当前实测或商业承诺。
 
@@ -32,14 +33,14 @@ python3 backend/server.py
 
 打开 http://127.0.0.1:8791/ 。Mac 也可双击 `start.command`，终端需保持开启。端口被占用时，使用 `python3 backend/server.py --port 8792` 并打开对应地址。
 
-后端默认只在本机运行。首次启动自动载入内置医院与商场；SQLite 数据位于 `backend/runtime/demo.sqlite`。重新启动会保留导入场馆和队列，数据管理页可恢复内置种子。
+后端默认只在本机运行。首次启动自动载入内置场馆；SQLite 数据位于 `backend/runtime/demo.sqlite`。旧城西银泰内置仿真包会自动备份到 `seed_backups` 表后迁移为1F照片包；其它导入场馆、反馈及队列保留，已迁移包的后续队列修改也保留。数据管理页可显式恢复内置种子。
 
 ## 三分钟讲解
 
-1. 选“医院就诊”，说明患者从目的地查找走向任务流程导航；点击“播放功能演示”。每段约12秒，也可“下一步”或点进度条跳转。
+1. 默认进入“商场导航”，选择迪卡侬、adidas或M Stand，也可以直接点击图上店铺；随后自动进入带路。
 2. 在路线章节说明地标指引；在候诊章节说明返回提醒。所有位置、号码与队列都是演示数据，未连接业务系统。
-3. 切到“商场展示”，先用五层立体图展示店铺色块，再点楼层、店名或“对照原图”；进入下一章展示仿真多点路线。页头“逐层看图”进入独立空间图。
-4. 打开“合作资料”，讨论一层地图、一个流程、一个业务负责人的小范围试点。先确认对方的问题与资源，再谈正式报价。
+3. 切到“医院就诊”体验原有模拟就诊流程。第二步起可播放/暂停或重新开始，也可以点击步进器跳转；自动播放约12秒切换下一步。
+4. 打开“资料与反馈”，讨论一层地图、一个流程、一个业务负责人的小范围试点。先确认对方的问题与资源，再谈正式报价。
 
 演示的排队章节会把对应地点队列写成1，以说明接口变化；“重新开始”或切换场景会恢复进入该场馆时的队列。直接关闭页面后，可在数据页恢复种子。模拟号码只存在当前页面，没有真实预约或叫号效力。
 
@@ -47,11 +48,11 @@ python3 backend/server.py
 
 先下载数据页内的商场、医院或自定义样例，修改后上传或粘贴，点击“验证并导入”，再打开该场馆展示。`examples/custom-map.json` 使用60×40米、三处全新编号地点，演示尺寸与几何真正随导入改变。
 
-格式、端点和示例请求见 [接口说明](docs/api.md)。目前接受约定 JSON：单层米制地图、矩形房间、走廊、门点、地点资料、任务流程与队列。真实西溪银泰等地图需要场馆授权、尺寸标定和几何转换；CAD、图片、GeoJSON不能直接作为此数据包上传。
+格式、端点和示例请求见 [接口说明](docs/api.md)。原单层矩形格式继续兼容，新增可选 `map.trace` 支持照片多边形和相对坐标；城西银泰适配器可由原资料重新生成数据。CAD、图片、GeoJSON不能直接作为场馆包上传，也不支持多楼层导航。
 
 ## 给前端协作者
 
-`frontend/` 是独立静态前端，不引用后端源码，没有构建依赖。主页面 `index.html`、自由体验 `demo.html`、数据页 `data-console.html` 分开；样式在 `styles/`，脚本在 `js/`。`api.js` 是唯一网络接口封装，使用同源 `/api/v1`。如果使用另一台开发服务器，需要把 `/api/v1` 代理到 Python 服务。
+`frontend/` 是独立静态前端，不引用后端源码，没有构建依赖。主页面 `index.html`、路线仿真 `demo.html`、数据页 `data-console.html`、附近场馆 `nearby.html` 和资料与反馈 `materials.html` 分开。主页面与圆圈菜单共用 `site-pages.js` 的导航名称和链接；资料与反馈页提供实际1F导览图、铺位地图、店铺记录、轮廓坐标及反馈表单，反馈写入本地 SQLite，重启服务后保留。样式在 `styles/`，脚本在 `js/`。`api.js` 是唯一网络接口封装，使用同源 `/api/v1`。如果使用另一台开发服务器，需要把 `/api/v1` 代理到 Python 服务。
 
 `bootstrap.js` 先加载场馆包，再按顺序挂载仿真文件。原算法按职责拆成 geometry、routing、positioning、simulation、navigation、queues、planner、renderers 等文件；这些传统脚本仍共享页面作用域，尚未重写成框架组件。展示页通过 `LouliDemo` 小接口操作地图。新页面可独立优化，避免打乱仿真加载顺序。
 
@@ -64,7 +65,7 @@ python3 -m unittest discover -s tests -v
 node --test frontend/js/*.test.mjs
 ```
 
-后端20项、前端15项测试通过。浏览器验证了首页立体图、楼层平面图、店名搜索、原图对照、后续仿真路线以及 390px 手机布局；既有医院/商场功能、导入与队列检查见 [验收记录](docs/acceptance.md)。
+后端25项测试中24项通过，1项因Windows符号链接权限跳过；前端15项通过。本轮浏览器验证了1413px、949px和390px下的1F选店、稳定切换、播放/暂停、候位、信标、重置、照片查看和医院回归。见 [验收记录](docs/acceptance.md)。
 
 ## 来源与交付边界
 

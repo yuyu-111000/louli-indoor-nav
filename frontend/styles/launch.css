@@ -1,5 +1,9 @@
 @charset "UTF-8";
 
+.pixel-swap-cover { position: fixed; inset: 0; z-index: 10000; overflow: hidden; pointer-events: none; }
+.pixel-swap-blocker { position: fixed; inset: 0; z-index: 10001; touch-action: none; }
+.pixel-swap-defs { position: fixed; width: 0; height: 0; pointer-events: none; }
+
 .launch {
   --launch-green: #153d32;
   --launch-mint: #9cdbc0;

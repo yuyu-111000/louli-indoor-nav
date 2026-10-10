@@ -1,0 +1,93 @@
+{
+  "venue": "杭州城西银泰城",
+  "floor": "1F",
+  "source": "用户提供的商场导览屏照片，2026-10-09 收到",
+  "coordinateSystem": {
+    "width": 1706,
+    "height": 1279,
+    "unit": "photo pixel",
+    "meaning": "照片中的相对位置；没有实际建筑比例或通路拓扑"
+  },
+  "shops": [
+    {
+      "id": "1F-S01",
+      "name": "迪卡侬",
+      "x": 305,
+      "y": 505,
+      "zoneId": "1F-Z17",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S02",
+      "name": "星巴克",
+      "x": 719,
+      "y": 322,
+      "zoneId": "1F-Z04",
+      "confidence": "review"
+    },
+    {
+      "id": "1F-S03",
+      "name": "M Stand",
+      "x": 1420,
+      "y": 620,
+      "zoneId": "1F-Z22",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S04",
+      "name": "adidas",
+      "x": 1120,
+      "y": 700,
+      "zoneId": "1F-Z26",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S05",
+      "name": "荣耀",
+      "x": 1397,
+      "y": 568,
+      "zoneId": "1F-Z22",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S06",
+      "name": "奈雪的茶",
+      "x": 579,
+      "y": 713,
+      "zoneId": "1F-Z28",
+      "confidence": "review"
+    },
+    {
+      "id": "1F-S07",
+      "name": "必胜客",
+      "x": 1289,
+      "y": 988,
+      "zoneId": "1F-Z31",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S08",
+      "name": "星巴克",
+      "x": 1460,
+      "y": 901,
+      "zoneId": "1F-Z30",
+      "confidence": "clear"
+    },
+    {
+      "id": "1F-S09",
+      "name": "麦高卡牌",
+      "x": 1139,
+      "y": 476,
+      "zoneId": "1F-Z15",
+      "confidence": "review"
+    },
+    {
+      "id": "1F-S10",
+      "name": "茶百道",
+      "x": 1295,
+      "y": 280,
+      "zoneId": "1F-Z02",
+      "confidence": "review"
+    }
+  ]
+}

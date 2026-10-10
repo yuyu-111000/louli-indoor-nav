@@ -74,13 +74,10 @@ if (group) {
     });
   });
   function reset() {
-    const activeDialog=document.querySelector('#nearbyDialog[open]')?2:document.querySelector('#materials[open]')?3:0;
-    apply(activeDialog);
+    apply(0);
   }
   group.addEventListener('pointerleave',()=>{if(!group.contains(document.activeElement))reset();});
   group.addEventListener('focusout',()=>queueMicrotask(()=>{if(!group.contains(document.activeElement))reset();}));
-  const observer=new MutationObserver(reset);
-  document.querySelectorAll('#nearbyDialog,#materials').forEach(dialog=>observer.observe(dialog,{attributes:true,attributeFilter:['open']}));
   const measure=()=>apply(selected,true);
   const resize=new ResizeObserver(measure);
   resize.observe(group);

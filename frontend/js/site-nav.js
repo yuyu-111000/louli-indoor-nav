@@ -1,4 +1,5 @@
 // FlowingMenu's directional solid reveal and looping text, with a circular opener.
+import {sitePages} from './site-pages.js';
 const slot = document.querySelector('[data-site-nav]');
 if (slot && !new URLSearchParams(location.search).has('embed')) {
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
@@ -12,7 +13,7 @@ if (slot && !new URLSearchParams(location.search).has('embed')) {
   dialog.id='pageNavigation';dialog.className='flow-nav';dialog.setAttribute('aria-labelledby','pageNavTitle');
   dialog.innerHTML='<div class="flow-nav-head"><span id="pageNavTitle" class="flow-nav-title">LOULI · 页面导航</span><button type="button" class="flow-nav-close" aria-label="关闭页面导航">×</button></div><nav aria-label="网站页面"></nav><p class="flow-nav-note">在楼里，知道下一步去哪里。</p>';
   document.body.append(dialog);
-  const items=[['./','主页面'],['reference-map.html','公开楼层图'],['demo.html','导航体验'],['data-console.html','演示数据']];
+  const items=sitePages();
   const links=[];
   const animations=new WeakMap();
   function reveal(row, visible, event) {
@@ -30,7 +31,7 @@ if (slot && !new URLSearchParams(location.search).has('embed')) {
       {transform:destination}
     ],{duration:450,easing:'cubic-bezier(.23,1,.32,1)'}));
   }
-  items.forEach(([path,text],index)=>{
+  items.forEach(({href:path,label:text},index)=>{
     const row=document.createElement('div');row.className='flow-nav-row';
     const link=document.createElement('a');link.className='flow-nav-link';link.href=path;
     const label=document.createElement('span');label.textContent=text;
@@ -62,11 +63,7 @@ if (slot && !new URLSearchParams(location.search).has('embed')) {
   });
   function refreshLinks() {
     const venue=document.querySelector('#venueSelect')?.value || new URLSearchParams(location.search).get('venue') || 'yintai-demo';
-    const publicVenue=venue==='xixi-demo'?'xixi-demo':'yintai-demo';
-    links[0].href=`./?venue=${encodeURIComponent(venue)}#showcase`;
-    links[1].href=`reference-map.html?venue=${publicVenue}`;
-    links[2].href=`demo.html?venue=${encodeURIComponent(venue)}`;
-    links[3].href=`data-console.html?venue=${encodeURIComponent(venue)}`;
+    sitePages(venue).forEach((page,i)=>{links[i].href=page.href;});
     document.querySelector('.louli-brand').href=links[0].href;
   }
   button.addEventListener('click',()=>{

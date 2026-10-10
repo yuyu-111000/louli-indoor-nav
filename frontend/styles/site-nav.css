@@ -40,3 +40,6 @@ body:has(.demo-site-header) .side{top:94px}
   .demo-site-header{padding:7px 16px}
 }
 @media(prefers-reduced-motion:reduce){.flow-nav[open],.flow-nav-track{animation:none}.site-nav-toggle span{transition:none}}
+
+@media(min-width:761px){body:has(.demo-site-header):not(.embedded) .fab{top:108px}body:has(.demo-site-header):not(.embedded) .navbanner{top:108px}}
+@media(max-width:760px){body:has(.demo-site-header):not(.embedded) .con-pill,body:has(.demo-site-header):not(.embedded) .fab,body:has(.demo-site-header):not(.embedded) .navbanner{top:calc(246px + env(safe-area-inset-top,0px))}body.navving:has(.demo-site-header):not(.embedded) .con-pill{top:calc(310px + env(safe-area-inset-top,0px))}}

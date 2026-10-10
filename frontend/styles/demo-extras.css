@@ -1,3 +1,5 @@
 body{margin:0}.embedded .side,.embedded .fab,.embedded .console,.embedded .con-pill,.embedded .about{display:none!important}.embedded .navbanner{left:24px;top:24px;width:auto;max-width:420px;right:24px;box-shadow:none;border-radius:12px}.embedded .toast{left:50%;transform:translateX(-50%);bottom:22px}.embedded #map{cursor:grab}.map-status{position:absolute;left:24px;bottom:22px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.92);padding:9px 13px;border-radius:8px;pointer-events:none}.embedded .toast:not([hidden])~.map-status{display:none}#loadError{position:fixed;inset:30% 10%;background:white;padding:32px;border:1px solid var(--line);z-index:100;font-size:17px}.side{top:40px}.demo-tools{position:absolute;right:18px;top:10px;z-index:10;font-size:12px;color:var(--muted)}.demo-tools a{color:var(--accent)}@media(max-width:760px){.embedded .navbanner{left:14px;right:14px;top:14px}.embedded .nb-main{font-size:18px}.map-status{left:12px;bottom:12px;font-size:11px}.side{top:35px}}
 
 .embedded .map-status{display:none}
+
+#pauseBtn{display:inline-flex;align-items:center;gap:6px}#pauseBtn .playback-icon{display:block}
